@@ -2,17 +2,17 @@
 
 # StreamingT2V
 
-This repository is the official implementation of [StreamingT2V](__assets__/github/pdf/StreamingT2V.pdf).
+This repository is the official implementation of [StreamingT2V](https://arxiv.org/abs/2403.14773).
 
 
-**[StreamingT2V: Consistent, Dynamic, and Extendable Long Video Generation from Text](__assets__/github/pdf/StreamingT2V.pdf)**
+**[StreamingT2V: Consistent, Dynamic, and Extendable Long Video Generation from Text](https://arxiv.org/abs/2403.14773)**
 </br>
 Roberto Henschel,
 Levon Khachatryan,
 Daniil Hayrapetyan,
 Hayk Poghosyan,
 Vahram Tadevosyan,
-[Zhangyang Wang](https://www.ece.utexas.edu/people/faculty/atlas-wang), Shant Navasardyan, [Humphrey Shi](https://www.humphreyshi.com)
+Zhangyang Wang, Shant Navasardyan, Humphrey Shi
 </br>
 
 
