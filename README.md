@@ -2,7 +2,7 @@
 
 # StreamingT2V
 
-This repository is the official implementation of [StreamingT2V](https://arxiv.org/abs/2403.14773).
+This repository is the official implementation of [StreamingT2V](https://streamingt2v.github.io/).
 
 
 **[StreamingT2V: Consistent, Dynamic, and Extendable Long Video Generation from Text](https://arxiv.org/abs/2403.14773)**
@@ -13,6 +13,7 @@ Daniil Hayrapetyan,
 Hayk Poghosyan,
 Vahram Tadevosyan,
 Zhangyang Wang, Shant Navasardyan, Humphrey Shi
+[arXiv preprint](https://arxiv.org/abs/2403.14773) [Project page](https://streamingt2v.github.io/)
 </br>
 
 
