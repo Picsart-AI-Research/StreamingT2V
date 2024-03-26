@@ -13,8 +13,9 @@ Daniil Hayrapetyan,
 Hayk Poghosyan,
 Vahram Tadevosyan,
 Zhangyang Wang, Shant Navasardyan, Humphrey Shi
-[arXiv preprint](https://arxiv.org/abs/2403.14773) [Project page](https://streamingt2v.github.io/)
 </br>
+
+[arXiv preprint](https://arxiv.org/abs/2403.14773) | [Video](https://twitter.com/i/status/1770909673463390414) | [Project page](https://streamingt2v.github.io/)
 
 
 <p align="center">
