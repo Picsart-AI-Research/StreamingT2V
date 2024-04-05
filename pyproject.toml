@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "t2v-enhanced"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "t2v_enhanced"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+torch = "^2.0.0"
+omegaconf = "^2.3.0"
+hydra-core = "^1.3.2"
+pytorch-lightning = {extras = ["extra"], version = "^2.0.9"}
+transformers = "^4.28.1"
+torchmetrics = {extras = ["image"], version = "^0.11.4"}
+mlflow = {extras = ["extras"], version = "^2.3.0"}
+torchvision = "^0.15.1"
+av = "^10.0.0"
+rich = "^13.3.4"
+albumentations = "^1.3.0"
+datasets = "^2.12.0"
+xformers = "^0.0.19"
+kornia = "^0.7.0"
+decord = "^0.6.0"
+gdown = "^4.7.1"
+pygifsicle = "^1.0.7"
+ftfy = "^6.1.1"
+regex = "^2023.6.3"
+clip = {git = "https://github.com/openai/CLIP.git@a1d071733d7111c9c014f024669f959182114e33"}
+
+
+[tool.poetry.group.dev.dependencies]
+yapf = "^0.33.0"
+autopep8 = "^2.0.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

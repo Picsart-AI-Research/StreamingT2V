@@ -1,0 +1,227 @@
+# pytorch_lightning==2.0.9
+seed_everything: 33
+trainer:
+  accelerator: auto
+  strategy: auto
+  devices: '8'
+  num_nodes: 1
+  # precision: 16-mixed
+  logger: null
+  callbacks:
+  - class_path: pytorch_lightning.callbacks.RichModelSummary
+    init_args:
+      max_depth: 1
+  - class_path: pytorch_lightning.callbacks.RichProgressBar
+    init_args:
+      refresh_rate: 1
+      leave: false
+      theme:
+        description: white
+        progress_bar: '#6206E0'
+        progress_bar_finished: '#6206E0'
+        progress_bar_pulse: '#6206E0'
+        batch_progress: white
+        time: grey54
+        processing_speed: grey70
+        metrics: white
+      console_kwargs: null
+  fast_dev_run: false
+  max_epochs: 5000
+  min_epochs: null
+  max_steps: 2020000
+  min_steps: null
+  max_time: null
+  limit_train_batches: null
+  limit_val_batches: 512
+  limit_test_batches: null
+  limit_predict_batches: null
+  overfit_batches: 0.0
+  val_check_interval: 8000
+  check_val_every_n_epoch: 1
+  num_sanity_val_steps: null
+  log_every_n_steps: 10
+  enable_checkpointing: null
+  enable_progress_bar: null
+  enable_model_summary: null
+  accumulate_grad_batches: 8
+  gradient_clip_val: 1
+  gradient_clip_algorithm: norm
+  deterministic: null
+  benchmark: null
+  inference_mode: true
+  use_distributed_sampler: true
+  profiler: null
+  detect_anomaly: false
+  barebones: false
+  plugins: null
+  sync_batchnorm: false
+  reload_dataloaders_every_n_epochs: 0
+  default_root_dir: null
+model:
+  inference_params:
+    class_path: t2v_enhanced.model.pl_module_params_controlnet.InferenceParams
+    init_args:
+      width: 256
+      height: 256
+      video_length: 16
+      guidance_scale: 7.5
+      use_dec_scaling: true
+      frame_rate: 8
+      num_inference_steps: 50
+      eta: 1.0
+      n_autoregressive_generations: 1
+      mode: long_video
+      start_from_real_input: true
+      eval_loss_metrics: false
+      scheduler_cls: ''
+      negative_prompt: ''
+      conditioning_from_all_past: false
+      validation_samples: 80
+      conditioning_type: last_chunk
+      result_formats:
+      - eval_gif
+      - gif
+      - mp4
+      concat_video: true
+  opt_params:
+    class_path: t2v_enhanced.model.pl_module_params_controlnet.OptimizerParams
+    init_args:
+      learning_rate: 5.0e-05
+      layers_config:
+        class_path: t2v_enhanced.model.requires_grad_setter.LayerConfig
+        init_args:
+          gradient_setup:
+          - - false
+            - - vae
+          - - false
+            - - text_encoder
+          - - false
+            - - image_encoder
+          - - true
+            - - resampler
+          - - true
+            - - unet
+          - - true
+            - - base_model
+          - - false
+            - - base_model
+              - transformer_in
+          - - false
+            - - base_model
+              - temp_attentions
+          - - false
+            - - base_model
+              - temp_convs
+      layers_config_base: null
+      use_warmup: false
+      warmup_steps: 10000
+      warmup_start_factor: 1.0e-05
+      learning_rate_spatial: 0.0
+      use_8_bit_adam: false
+      noise_generator: null
+      noise_decomposition: null
+      perceptual_loss: false
+      noise_offset: 0.0
+      split_opt_by_node: false
+      reset_prediction_type_to_eps: false
+      train_val_sampler_may_differ: true
+      measure_similarity: false
+      similarity_loss: false
+      similarity_loss_weight: 1.0
+      loss_conditional_weight: 0.0
+      loss_conditional_weight_convex: false
+      loss_conditional_change_after_step: 0
+      mask_conditional_frames: false
+      sample_from_noise: true
+      mask_alternating: false
+      uncondition_freq: -1
+      no_text_condition_control: false
+      inject_image_into_input: false
+      inject_at_T: false
+      resampling_steps: 1
+      control_freq_in_resample: 1
+      resample_to_T: false
+      adaptive_loss_reweight: false
+      load_resampler_from_ckpt: ''
+      skip_controlnet_branch: false
+      use_fps_conditioning: false
+      num_frame_embeddings_range: 16
+      start_frame_training: 16
+      start_frame_ctrl: 16
+      load_trained_base_model_and_resampler_from_ckpt: ''
+      load_trained_controlnet_from_ckpt: ''
+  unet_params:
+    class_path: t2v_enhanced.model.pl_module_params_controlnet.UNetParams
+    init_args:
+      conditioning_embedding_out_channels:
+      - 32
+      - 96
+      - 256
+      - 512
+      ckpt_spatial_layers: ''
+      pipeline_repo: damo-vilab/text-to-video-ms-1.7b
+      unet_from_diffusers: true
+      spatial_latent_input: false
+      num_frame_conditioning: 1
+      pipeline_class: t2v_enhanced.model.model.controlnet.pipeline_text_to_video_w_controlnet_synth.TextToVideoSDPipeline
+      frame_expansion: none
+      downsample_controlnet_cond: true
+      num_frames: 16
+      pre_transformer_in_cond: false
+      num_tranformers: 1
+      zero_conv_3d: false
+      merging_mode: addition
+      compute_only_conditioned_frames: false
+      condition_encoder: ''
+      zero_conv_mode: Identity
+      clean_model: true
+      merging_mode_base: attention_cross_attention
+      attention_mask_params: null
+      attention_mask_params_base: null
+      modelscope_input_format: true
+      temporal_self_attention_only_on_conditioning: false
+      temporal_self_attention_mask_included_itself: false
+      use_post_merger_zero_conv: false
+      weight_control_sample: 1.0
+      use_controlnet_mask: false
+      random_mask_shift: false
+      random_mask: false
+      use_resampler: true
+      unet_from_pipe: false
+      unet_operates_on_2d: false
+      image_encoder: CLIP
+      use_standard_attention_processor: false
+      num_frames_before_chunk: 0
+      resampler_type: single_frame
+      resampler_cls: t2v_enhanced.model.diffusers_conditional.models.controlnet.image_embedder.ImgEmbContextResampler
+      resampler_merging_layers: 4
+      image_encoder_obj:
+        class_path: t2v_enhanced.model.diffusers_conditional.models.controlnet.image_embedder.FrozenOpenCLIPImageEmbedder
+        init_args:
+          arch: ViT-H-14
+          version: laion2b_s32b_b79k
+          device: cuda
+          max_length: 77
+          freeze: true
+          antialias: true
+          ucg_rate: 0.0
+          unsqueeze_dim: false
+          repeat_to_max_len: false
+          num_image_crops: 0
+          output_tokens: false
+      cfg_text_image: false
+      aggregation: last_out
+      resampler_random_shift: true
+      img_cond_alpha_per_frame: false
+      num_control_input_frames: 8
+      use_image_encoder_normalization: false
+      use_of: false
+      ema_param: -1.0
+      concat: false
+      use_image_tokens_main: true
+      use_image_tokens_ctrl: false
+result_fol: results
+exp_name: my_exp_name
+run_name: my_run_name
+scale_lr: false
+matmul_precision: high

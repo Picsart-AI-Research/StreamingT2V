@@ -1,0 +1,37 @@
+trainer:
+  devices: '1'
+  num_nodes: 1
+model:
+  inference_params:
+    class_path: t2v_enhanced.model.pl_module_params_controlnet.InferenceParams
+    init_args:
+      num_inference_steps: 50  # number of inference steps
+      frame_rate: 8
+      eta: 1.0   # eta used for DDIM sampler
+      guidance_scale: 7.5     # classifier free guidance scale
+      conditioning_type: fixed
+      start_from_real_input: false
+      n_autoregressive_generations: 6  # how many autoregressive generations
+      scheduler_cls: '' # we can load other models
+  unet_params:
+    class_path: t2v_enhanced.model.pl_module_params_controlnet.UNetParams
+    init_args:
+      use_standard_attention_processor: False
+  opt_params:
+    class_path: t2v_enhanced.model.pl_module_params_controlnet.OptimizerParams
+    init_args:
+      noise_generator:
+        class_path: t2v_enhanced.model.video_noise_generator.NoiseGenerator
+        init_args:
+          mode: vanilla # can be 'vanilla','mixed_noise', 'consistI2V' or 'mixed_noise_consistI2V'
+          alpha: 1.0
+          shared_noise_across_chunks: True  # if true, shared noise between all chunks of a video
+          forward_steps: 850 # number of DDPM forward steps
+          radius: [2,2,2]  # radius for time, width and height
+n_predictions: 300
+data:
+  class_path: t2v_enhanced.model.datasets.prompt_reader.PromptReader
+  init_args:
+    prompt_cfg: 
+      type: file
+      content: /home/roberto.henschel/T2V-Enhanced/repo/training_code/t2v_enhanced/evaluation_prompts/prompts_long_eval.txt

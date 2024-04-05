@@ -1,0 +1,18 @@
+# These codes are copied from modelscope revision c58451baead80d83281f063d12fb377fad415257 
+# Copyright (c) Alibaba, Inc. and its affiliates.
+
+import copy
+
+from .giraffe_fpn import GiraffeNeck
+from .giraffe_fpn_btn import GiraffeNeckV2
+
+
+def build_neck(cfg):
+    neck_cfg = copy.deepcopy(cfg)
+    name = neck_cfg.pop('name')
+    if name == 'GiraffeNeckV2':
+        return GiraffeNeckV2(**neck_cfg)
+    elif name == 'GiraffeNeck':
+        return GiraffeNeck(**neck_cfg)
+    else:
+        raise NotImplementedError

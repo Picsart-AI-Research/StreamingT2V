@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+
+.mlflow/
+/logs
+/experiments
+/t2v_enhanced/.mlflow
+/t2v_enhanced/logs
+/t2v_enhanced/slurm_logs
+/t2v_enhanced/results
+
+t2v_enhanced/.mlflow
+t2v_enhanced/logs
+t2v_enhanced/slurm_logs
+t2v_enhanced/lightning_logs
+t2v_enhanced/results
+t2v_enhanced/gradio_output
+venv/
+t2v_enhanced/checkpoints
+
+# remove vim temporary files
+*~
+
