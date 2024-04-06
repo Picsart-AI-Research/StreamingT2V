@@ -7,6 +7,7 @@ This repository is the official implementation of [StreamingT2V](https://streami
 
 **[StreamingT2V: Consistent, Dynamic, and Extendable Long Video Generation from Text](https://arxiv.org/abs/2403.14773)**
 </br>
+
 Roberto Henschel,
 Levon Khachatryan,
 Daniil Hayrapetyan,
@@ -83,9 +84,9 @@ python inference.py --image=../__assets__/demo/fish.jpg --base_model=SVD
 | 24 frames        | 40 seconds                                   | 165 seconds                                  |
 | 56 frames        | 75 seconds                                   | 360 seconds                                  |
 | 80 frames        | 110 seconds                                  | 525 seconds                                  |
-| 240 frames       | 340 seconds                                  | X seconds                                    |
-| 600 frames       | 860 seconds                                  | X seconds                                    |
-| 1200 frames      | 1710 seconds                                 | X seconds                                    |
+| 240 frames       | 340 seconds                                  | 1610 seconds (~27 min)                       |
+| 600 frames       | 860 seconds                                  | 5128 seconds (~85 min)                       |
+| 1200 frames      | 1710 seconds (~28 min)                       | 10225 seconds (~170 min)                     |
 
 ##### [AnimateDiff](https://github.com/guoyww/AnimateDiff) as a Base Model
 | Number of Frames | Inference Time for Faster Preview (256x256)  | Inference Time for Final Result (720x720)    |
@@ -93,9 +94,9 @@ python inference.py --image=../__assets__/demo/fish.jpg --base_model=SVD
 | 24 frames        | 50 seconds                                   | 180 seconds                                  |
 | 56 frames        | 85 seconds                                   | 370 seconds                                  |
 | 80 frames        | 120 seconds                                  | 535 seconds                                  |
-| 240 frames       | 350 seconds                                  | X seconds                                    |
-| 600 frames       | 870 seconds                                  | X seconds                                    |
-| 1200 frames      | 1720 seconds                                 | X seconds                                    |
+| 240 frames       | 350 seconds                                  | 1620 seconds (~27 min)                       |
+| 600 frames       | 870 seconds                                  | 5138 seconds (~85 min)                       |
+| 1200 frames      | 1720 seconds (~28 min)                       | 10235 seconds (~170 min)                     |
 
 ##### [SVD](https://github.com/Stability-AI/generative-models) as a Base Model
 | Number of Frames | Inference Time for Faster Preview (256x256)  | Inference Time for Final Result (720x720)    |
@@ -103,11 +104,11 @@ python inference.py --image=../__assets__/demo/fish.jpg --base_model=SVD
 | 24 frames        | 80 seconds                                   | 210 seconds                                  |
 | 56 frames        | 115 seconds                                  | 400 seconds                                  |
 | 80 frames        | 150 seconds                                  | 565 seconds                                  |
-| 240 frames       | 380 seconds                                  | X seconds                                    |
-| 600 frames       | 900 seconds                                  | X seconds                                    |
-| 1200 frames      | 1750 seconds                                 | X seconds                                    |
+| 240 frames       | 380 seconds                                  | 1650 seconds (~27 min)                       |
+| 600 frames       | 900 seconds                                  | 5168 seconds (~86 min)                       |
+| 1200 frames      | 1750 seconds (~29 min)                       | 10265 seconds (~171 min)                     |
 
-All measurements were conducted using the NVIDIA A100 (80 GB) GPU. Randomized blending is employed when the frame count surpasses 80. For Randomized blending, the values for `chunk_size` and `overlap_size` are set to 56 and 32, respectively, for a 240 frames. For 600 frames and 1200 frames, these values are adjusted to 112 and 32, respectively.
+All measurements were conducted using the NVIDIA A100 (80 GB) GPU. Randomized blending is employed when the frame count surpasses 80. For Randomized blending, the values for `chunk_size` and `overlap_size` are set to 112 and 32, respectively.
 
 ### Gradio
 The same functionality is also available as a gradio demo
