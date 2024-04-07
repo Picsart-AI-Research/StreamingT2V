@@ -24,7 +24,7 @@ Zhangyang Wang, Shant Navasardyan, Humphrey Shi
 
 <sup>&ast;</sup> Equal Contribution -->
 
-[![arXiv](https://img.shields.io/badge/arXiv-StreamingT2V-red)](https://arxiv.org/abs/2312.04410) [![Project Page](https://img.shields.io/badge/Project-Website-orange)](https://streamingt2v.github.io/) [![YouTube](https://badges.aleen42.com/src/youtube.svg)](https://www.youtube.com/watch?v=GDPP0zmFmQg) [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/PAIR/StreamingT2V)
+[![arXiv](https://img.shields.io/badge/arXiv-StreamingT2V-red)](https://arxiv.org/abs/2403.14773) [![Project Page](https://img.shields.io/badge/Project-Website-orange)](https://streamingt2v.github.io/) [![YouTube](https://badges.aleen42.com/src/youtube.svg)](https://www.youtube.com/watch?v=GDPP0zmFmQg) [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/PAIR/StreamingT2V)
 
 <!-- [Paper](https://arxiv.org/abs/2403.14773) | [Video](https://twitter.com/i/status/1770909673463390414) | [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/PAIR/StreamingT2V) | [Project](https://streamingt2v.github.io/) -->
 
