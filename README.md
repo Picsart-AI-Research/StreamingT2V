@@ -4,19 +4,29 @@
 
 This repository is the official implementation of [StreamingT2V](https://streamingt2v.github.io/).
 
+> **StreamingT2V: Consistent, Dynamic, and Extendable Long Video Generation from Text**  
+> [Roberto Henschel](https://www.linkedin.com/in/dr-ing-roberto-henschel-6aa1ba176)\*,
+> [Levon Khachatryan](https://levon-kh.github.io/)\*,
+> [Daniil Hayrapetyan](https://www.linkedin.com/in/daniil-hayrapetyan-375b05149/)\*,
+> [Hayk Poghosyan](https://www.linkedin.com/in/hayk-poghosyan-793b97198/),
+> [Vahram Tadevosyan](https://www.linkedin.com/in/vtadevosian),
+> [Zhangyang Wang](https://www.ece.utexas.edu/people/faculty/atlas-wang),
+> [Shant Navasardyan](https://www.linkedin.com/in/shant-navasardyan-1302aa149),
+> [Humphrey Shi](https://www.humphreyshi.com)
 
-**[StreamingT2V: Consistent, Dynamic, and Extendable Long Video Generation from Text](https://arxiv.org/abs/2403.14773)**
-</br>
-
-Roberto Henschel,
-Levon Khachatryan,
-Daniil Hayrapetyan,
+<!-- Roberto Henschel<sup>&ast;</sup>,
+Levon Khachatryan<sup>&ast;</sup>,
+Daniil Hayrapetyan<sup>&ast;</sup>,
 Hayk Poghosyan,
 Vahram Tadevosyan,
 Zhangyang Wang, Shant Navasardyan, Humphrey Shi
 </br>
 
-[arXiv preprint](https://arxiv.org/abs/2403.14773) | [Video](https://twitter.com/i/status/1770909673463390414) | [Project page](https://streamingt2v.github.io/)
+<sup>&ast;</sup> Equal Contribution -->
+
+[![arXiv](https://img.shields.io/badge/arXiv-StreamingT2V-red)](https://arxiv.org/abs/2312.04410) [![Project Page](https://img.shields.io/badge/Project-Website-orange)](https://streamingt2v.github.io/) [![YouTube](https://badges.aleen42.com/src/youtube.svg)](https://www.youtube.com/watch?v=GDPP0zmFmQg) [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/PAIR/StreamingT2V)
+
+<!-- [Paper](https://arxiv.org/abs/2403.14773) | [Video](https://twitter.com/i/status/1770909673463390414) | [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/PAIR/StreamingT2V) | [Project](https://streamingt2v.github.io/) -->
 
 
 <p align="center">
@@ -30,6 +40,7 @@ Zhangyang Wang, Shant Navasardyan, Humphrey Shi
 
 * [03/21/2024] Paper [StreamingT2V](https://arxiv.org/abs/2403.14773) released!
 * [04/05/2024] Code and [model](https://huggingface.co/PAIR/StreamingT2V) released!
+* [04/06/2024] The [first version](https://huggingface.co/spaces/PAIR/StreamingT2V) of our huggingface demo released!
 
 
 ## Setup
