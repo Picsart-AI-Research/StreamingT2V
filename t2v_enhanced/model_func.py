@@ -75,7 +75,7 @@ def svd_short_gen(image, prompt, svd_model, sdxl_model, inference_generator, t=2
     return frames
 
 
-def stream_long_gen(prompt, short_video, n_autoreg_gen, seed, t, image_guidance, result_file_stem, stream_cli, stream_model):
+def stream_long_gen(prompt, short_video, n_autoreg_gen, negative_prompt, seed, t, image_guidance, result_file_stem, stream_cli, stream_model):
     trainer = stream_cli.trainer
     trainer.limit_predict_batches = 1
 
@@ -89,7 +89,7 @@ def stream_long_gen(prompt, short_video, n_autoreg_gen, seed, t, image_guidance,
         "guidance_scale": image_guidance,
         'n_autoregressive_generations': n_autoreg_gen,
     }
-
+    stream_model.inference_params.negative_prompt = negative_prompt
     trainer.predict(model=stream_model, datamodule=stream_cli.datamodule)
 
 
@@ -136,7 +136,7 @@ def video2video(prompt, video, where_to_log, cfg_v2v, model_v2v, square=True):
 
 
 # The main functionality for video to video
-def video2video_randomized(prompt, video, where_to_log, cfg_v2v, model_v2v, square=True, chunk_size=24, overlap_size=8):
+def video2video_randomized(prompt, video, where_to_log, cfg_v2v, model_v2v, square=True, chunk_size=24, overlap_size=8, negative_prompt=""):
     downscale = cfg_v2v['downscale']
     upscale_size = cfg_v2v['upscale_size']
     pad = cfg_v2v['pad']
@@ -150,6 +150,8 @@ def video2video_randomized(prompt, video, where_to_log, cfg_v2v, model_v2v, squa
 
     n_chunks = (len(video_frames) - overlap_size) // (chunk_size - overlap_size)
     trim_length = n_chunks * (chunk_size - overlap_size) + overlap_size
+    if trim_length < chunk_size:
+        raise ValueError(f"Chunk size [{chunk_size}] cannot be larger than the number of frames in the video [{len(video_frames)}], please provide smaller chunk size")
     if trim_length < len(video_frames):
         print("Video cannot be processed with chunk size {chunk_size} and overlap size {overlap_size}, " 
               "trimming it to length {trim_length} to be able to process it")
@@ -175,10 +177,7 @@ def video2video_randomized(prompt, video, where_to_log, cfg_v2v, model_v2v, squa
         'video_path': opj(where_to_log, 'temp.mp4'),
         'text': prompt,
         'positive_prompt': "",
-        'negative_prompt': ("worst quality, normal quality, low quality, low res, blurry, text, "
-                            "watermark, logo, banner, extra digits, cropped, "
-                            "jpeg artifacts, signature, username, error, "
-                            "sketch ,duplicate, ugly, monochrome, horror, geometry, mutation, disgusting"),
+        'negative_prompt': negative_prompt,
         'total_noise_levels': 600,
     }
 
