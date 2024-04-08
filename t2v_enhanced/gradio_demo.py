@@ -78,7 +78,7 @@ def generate(prompt, num_frames, image, model_name_stage1, model_name_stage2, se
             image = image["path"]
         short_video = svd_short_gen(image, prompt, svd_model, sdxl_model, inference_generator, t, device)
 
-    stream_long_gen(prompt, short_video, n_autoreg_gen, seed, t, image_guidance, name, stream_cli, stream_model)
+    stream_long_gen(prompt, short_video, n_autoreg_gen, "", seed, t, image_guidance, name, stream_cli, stream_model)
     video_path = opj(where_to_log, name+".mp4")
     return video_path
 

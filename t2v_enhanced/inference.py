@@ -37,6 +37,8 @@ if __name__ == "__main__":
     parser.add_argument('--base_model', type=str, default="ModelscopeT2V", help="Base model to generate first chunk from", choices=["ModelscopeT2V", "AnimateDiff", "SVD"])
     parser.add_argument('--num_frames', type=int, default=24, help="The number of video frames to generate.")
     parser.add_argument('--negative_prompt', type=str, default="", help="The prompt to guide what to not include in video generation.")
+    parser.add_argument('--negative_prompt_enhancer', type=str, default=None, help="The prompt to guide what to not include in video enhancement. "
+                        "By default is the same as --negative_prompt")
     parser.add_argument('--num_steps', type=int, default=50, help="The number of denoising steps.")
     parser.add_argument('--image_guidance', type=float, default=9.0, help="The guidance scale.")
 
@@ -44,8 +46,8 @@ if __name__ == "__main__":
     parser.add_argument('--device', type=str, default="cuda")
     parser.add_argument('--seed', type=int, default=33, help="Random seed")
 
-    parser.add_argument('--chunk', type=int, default=56, help="chunk_size for randomized blending")
-    parser.add_argument('--overlap', type=int, default=32, help="overlap_size for randomized blending")
+    parser.add_argument('--chunk', type=int, default=24, help="chunk_size for randomized blending")
+    parser.add_argument('--overlap', type=int, default=8, help="overlap_size for randomized blending")
     args = parser.parse_args()
 
 
@@ -94,10 +96,13 @@ if __name__ == "__main__":
         short_video = svd_short_gen(args.image, args.prompt, model, sdxl_model, inference_generator)
 
     n_autoreg_gen = (args.num_frames-8)//8
-    stream_long_gen(args.prompt, short_video, n_autoreg_gen, args.seed, args.num_steps, args.image_guidance, name, stream_cli, stream_model)
+    stream_long_gen(args.prompt, short_video, n_autoreg_gen, args.negative_prompt, args.seed, args.num_steps, args.image_guidance, name, stream_cli, stream_model)
+
+    args.negative_prompt_enhancer = args.negative_prompt_enhancer if args.negative_prompt_enhancer is not None else args.negative_prompt
+    
+    video2video_randomized(args.prompt, opj(result_fol, name+".mp4"), result_fol, cfg_v2v, msxl_model,
+                           chunk_size=args.chunk, 
+                           overlap_size=args.overlap,
+                           negative_prompt=args.negative_prompt_enhancer)
 
 
-    if args.num_frames > 80:
-        video2video_randomized(args.prompt, opj(result_fol, name+".mp4"), result_fol, cfg_v2v, msxl_model, chunk_size=args.chunk, overlap_size=args.overlap)
-    else:
-        video2video(args.prompt, opj(result_fol, name+".mp4"), result_fol, cfg_v2v, msxl_model)
