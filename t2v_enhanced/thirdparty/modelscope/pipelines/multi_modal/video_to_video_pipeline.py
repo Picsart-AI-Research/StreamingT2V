@@ -62,8 +62,6 @@ class VideoToVideoPipeline(Pipeline):
         caption = text + input['positive_prompt']
         logger.info(f"Positive prompt: '{caption}'")
         y = self.model.clip_encoder(caption).detach()
-        total_noise_levels = input['total_noise_levels']
-
         max_frames = self.model.cfg.max_frames
 
         capture = cv2.VideoCapture(vid_path)
@@ -90,11 +88,10 @@ class VideoToVideoPipeline(Pipeline):
         capture.release()
 
         video_data = self.model.vid_trans(frame_list)
-
         return {'video_data': video_data,
                 'y': y,
-                'total_noise_levels': total_noise_levels,
-                'negative_prompt': input['negative_prompt']}
+                'total_noise_levels': input.get('total_noise_levels', 600),
+                'negative_prompt': input.get('negative_prompt', self.model.cfg.negative_prompt)}
 
     def forward(self, input: Dict[str, Any],
                 **forward_params) -> Dict[str, Any]:

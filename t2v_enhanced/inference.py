@@ -94,7 +94,7 @@ if __name__ == "__main__":
         short_video = svd_short_gen(args.image, args.prompt, model, sdxl_model, inference_generator)
 
     n_autoreg_gen = (args.num_frames-8)//8
-    stream_long_gen(args.prompt, short_video, n_autoreg_gen, args.negative_prompt, args.seed, args.num_steps, args.image_guidance, name, stream_cli, stream_model)
+    stream_long_gen(args.prompt, short_video, n_autoreg_gen, args.seed, args.num_steps, args.image_guidance, name, stream_cli, stream_model)
 
 
     if args.num_frames > 80:
