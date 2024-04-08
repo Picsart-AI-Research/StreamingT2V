@@ -118,9 +118,11 @@ def video2video(prompt, video, where_to_log, cfg_v2v, model_v2v, square=True):
 
     p_input = {
         'video_path': opj(where_to_log, 'temp_'+now+'.mp4'),
-        'text': prompt
+        'text': prompt,
+        "positive_prompt": prompt,
+        "total_noise_levels": 600,
     }
-    output_video_path = model_v2v(p_input, output_video=enhanced_video_mp4)[OutputKeys.OUTPUT_VIDEO]
+    model_v2v(p_input, output_video=enhanced_video_mp4)[OutputKeys.OUTPUT_VIDEO]
 
     # Remove padding
     video_frames = imageio.mimread(enhanced_video_mp4)
