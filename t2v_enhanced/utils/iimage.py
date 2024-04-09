@@ -508,7 +508,7 @@ class Animation:
         )
         plt.close()
         if Animation.ANIMATION_MODE == Animation.HTML:
-            self.anim_str = self.anim_obj.to_html5_video()
+            self.anim_str = self.anim_obj.to_html5_video(embed_limit=1000.0)
         elif Animation.ANIMATION_MODE == Animation.JS:
             self.anim_str = self.anim_obj.to_jshtml()
         return self.anim_obj
