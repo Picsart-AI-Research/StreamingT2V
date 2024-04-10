@@ -242,7 +242,7 @@ class VideoLDM(pl.LightningModule):
             else:
                 latents = None
             if idx == 0:
-                sample = cfg["video"]
+                sample = cfg["video"].to(self.device)
             else:
                 if inference_params.conditioning_type == "fixed":
                     context = chunks_conditional[0][:self.unet_params.num_frame_conditioning]

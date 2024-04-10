@@ -99,3 +99,27 @@ def center_crop(pil_img):
     # Crop the center of the image
     pil_img = pil_img.crop((left, top, right, bottom))
     return pil_img
+
+
+def v2v_to_device(pipe_enhance, device):
+    pipe_enhance.device = device
+
+    pipe_enhance.model = pipe_enhance.model.to(device)
+    pipe_enhance.model.device = device
+    
+    pipe_enhance.model.clip_encoder.model = pipe_enhance.model.clip_encoder.model.to(device)
+    pipe_enhance.model.clip_encoder.device = device
+
+    pipe_enhance.model.autoencoder = pipe_enhance.model.autoencoder.to(device)
+    pipe_enhance.model.generator = pipe_enhance.model.generator.to(device)
+    if device.startswith("cuda"):
+        pipe_enhance.model.generator = pipe_enhance.model.generator.half()
+    pipe_enhance.model.negative_y = pipe_enhance.model.negative_y.to(device)
+    return pipe_enhance
+
+def st2v_to_device(stream_model, device):
+    stream_model = stream_model.to(device)
+    stream_model.inference_pipeline.unet = stream_model.inference_pipeline.unet.to(device)
+    stream_model.inference_pipeline.vae = stream_model.inference_pipeline.vae.to(device)
+    stream_model.inference_pipeline = stream_model.inference_pipeline.to(device)
+    return stream_model
