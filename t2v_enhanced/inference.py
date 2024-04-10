@@ -28,7 +28,6 @@ from inference_utils import *
 from model_init import *
 from model_func import *
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--prompt', type=str, default="A cat running on the street", help="The prompt to guide video generation.")
@@ -48,6 +47,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--chunk', type=int, default=24, help="chunk_size for randomized blending")
     parser.add_argument('--overlap', type=int, default=8, help="overlap_size for randomized blending")
+    
+    parser.add_argument('--offload_models', action='store_true', help="Load/Offload models to gpu/cpu before and after inference")
     args = parser.parse_args()
 
 
@@ -65,19 +66,33 @@ if __name__ == "__main__":
     # --------------------------
     # ----- Initialization -----
     # --------------------------
-    stream_cli, stream_model = init_streamingt2v_model(ckpt_file_streaming_t2v, result_fol)
     if args.base_model == "ModelscopeT2V":
-        model = init_modelscope(device)
+        if args.offload_models:
+            model = init_modelscope("cpu")
+        else:
+            model = init_modelscope(device)
     elif args.base_model == "AnimateDiff":
-        model = init_animatediff(device)
+        if args.offload_models:
+            model = init_animatediff("cpu")
+        else:
+            model = init_animatediff(device)
     elif args.base_model == "SVD":
-        model = init_svd(device)
-        sdxl_model = init_sdxl(device)
+        if args.offload_models:
+            model = init_svd("cpu")
+            sdxl_model = init_sdxl("cpu")
+        else:
+            model = init_svd(device)
+            sdxl_model = init_sdxl(device)
     
-    msxl_model = init_v2v_model(cfg_v2v)
+    if args.offload_models:
+        msxl_model = init_v2v_model(cfg_v2v, "cpu")
+    else:
+        msxl_model = init_v2v_model(cfg_v2v, device)
 
+    stream_cli, stream_model = init_streamingt2v_model(ckpt_file_streaming_t2v, result_fol, "cuda")
+    if args.offload_models:
+        stream_model = st2v_to_device(stream_model, "cpu")
     inference_generator = torch.Generator(device="cuda")
-
 
     # ------------------
     # ----- Inputs -----
@@ -87,22 +102,34 @@ if __name__ == "__main__":
 
     inference_generator = torch.Generator(device="cuda")
     inference_generator.manual_seed(args.seed)
-    
+
+    if args.offload_models:
+        model = model.to(device)
     if args.base_model == "ModelscopeT2V":
         short_video = ms_short_gen(args.prompt, model, inference_generator)
     elif args.base_model == "AnimateDiff":
         short_video = ad_short_gen(args.prompt, model, inference_generator)
     elif args.base_model == "SVD":
+        if args.offload_models:
+            sdxl_model = sdxl_model.to(device)
         short_video = svd_short_gen(args.image, args.prompt, model, sdxl_model, inference_generator)
+        if args.offload_models:
+            sdxl_model = sdxl_model.to("cpu")
+    if args.offload_models:
+        model = model.to("cpu")
 
     n_autoreg_gen = (args.num_frames-8)//8
     stream_long_gen(args.prompt, short_video, n_autoreg_gen, args.negative_prompt, args.seed, args.num_steps, args.image_guidance, name, stream_cli, stream_model)
+    if args.offload_models:
+        stream_model = st2v_to_device(stream_model, "cpu")
 
     args.negative_prompt_enhancer = args.negative_prompt_enhancer if args.negative_prompt_enhancer is not None else args.negative_prompt
-    
+    if args.offload_models:
+        msxl_model = v2v_to_device(msxl_model, device)
     video2video_randomized(args.prompt, opj(result_fol, name+".mp4"), result_fol, cfg_v2v, msxl_model,
                            chunk_size=args.chunk, 
                            overlap_size=args.overlap,
                            negative_prompt=args.negative_prompt_enhancer)
-
+    if args.offload_models:
+        msxl_model = v2v_to_device(msxl_model, "cpu")
 

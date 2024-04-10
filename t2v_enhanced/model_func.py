@@ -51,7 +51,7 @@ def sdxl_image_gen(prompt, sdxl_model):
     return image
 
 def svd_short_gen(image, prompt, svd_model, sdxl_model, inference_generator, t=25, device="cuda"):
-    if image is None:
+    if image is None or image == "":
         image = sdxl_image_gen(prompt, sdxl_model)
         image = image.resize((576, 576))
         image = add_margin(image, 0, 224, 0, 224, (0, 0, 0))
