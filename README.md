@@ -64,7 +64,12 @@ pip install -r requirements.txt
 conda install conda-forge::ffmpeg
 ```
 4. Download the weights from [HF](https://huggingface.co/PAIR/StreamingT2V) and put them into the `t2v_enhanced/checkpoints` directory.
-
+```
+mkdir checkpoints
+cd checkpoints
+wget https://huggingface.co/PAIR/StreamingT2V/resolve/main/streaming_t2v.ckpt
+cd ..
+```
 ---  
 
 
