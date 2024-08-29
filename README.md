@@ -37,10 +37,10 @@ Zhangyang Wang, Shant Navasardyan, Humphrey Shi
 </p>
 
 ## News
-* [03/21/2024] Paper [StreamingT2V](https://arxiv.org/abs/2403.14773) released!
-* [04/05/2024] Code and [model](https://huggingface.co/PAIR/StreamingT2V) released!
-* [04/06/2024] The [first version](https://huggingface.co/spaces/PAIR/StreamingT2V) of our huggingface demo released!
 * [07/29/2024] Released MAWE codes.
+* [04/06/2024] The [first version](https://huggingface.co/spaces/PAIR/StreamingT2V) of our huggingface demo released!
+* [04/05/2024] Code and [model](https://huggingface.co/PAIR/StreamingT2V) released!
+* [03/21/2024] Paper [StreamingT2V](https://arxiv.org/abs/2403.14773) released!
 
 ## Setup
 
@@ -136,7 +136,7 @@ Detailed results can be found in the [Project page](https://streamingt2v.github.
 
 
 ## MAWE (Motion Aware Warp Error)
-If you need to compute MAWE you can use `get_mawe` function from `mave.py` from the project root.
+For computing MAWE use `get_mawe` function from `mave.py` from the project root.
 
 ## License
 Our code is published under the CreativeML Open RAIL-M license.
