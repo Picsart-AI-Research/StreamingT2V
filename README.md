@@ -71,23 +71,6 @@ cd -
 ```
 ---  
 
-5. (Optional) Download modelscope video-to-video model.
-This model 
-
-```
-git lfs install
-mkdir -p ~/.cache/modelscope/hub/damo/
-cd ~/.cache/modelscope/hub/damo/Video-to-Video
-
-wget https://huggingface.co/camenduru/Video-to-Video/resolve/main/non_ema_0035000.pth
-wget https://huggingface.co/camenduru/Video-to-Video/resolve/main/non_ema_0035000.pth
-wget https://huggingface.co/camenduru/Video-to-Video/resolve/main/open_clip_pytorch_model.bin
-wget https://huggingface.co/camenduru/Video-to-Video/resolve/main/v2-1_512-ema-pruned.ckpt
-```
-
-```
-camenduru/damo-video-to-video
-```
 ## Inference
 
 
