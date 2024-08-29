@@ -20,7 +20,7 @@ Daniil Hayrapetyan<sup>&ast;</sup>,
 Hayk Poghosyan,
 Vahram Tadevosyan,
 Zhangyang Wang, Shant Navasardyan, Humphrey Shi
-</br>
+</br>+
 
 <sup>&ast;</sup> Equal Contribution -->
 
@@ -65,14 +65,30 @@ conda install conda-forge::ffmpeg
 ```
 4. Download the weights from [HF](https://huggingface.co/PAIR/StreamingT2V) and put them into the `t2v_enhanced/checkpoints` directory.
 ```
-mkdir checkpoints
-cd checkpoints
+mkdir t2v_enhanced/checkpoints
+cd t2v_enhanced/checkpoints
 wget https://huggingface.co/PAIR/StreamingT2V/resolve/main/streaming_t2v.ckpt
-cd ..
+cd -
 ```
 ---  
 
+5. (Optional) Download modelscope video-to-video model.
+This model 
 
+```
+git lfs install
+mkdir -p ~/.cache/modelscope/hub/damo/
+cd ~/.cache/modelscope/hub/damo/Video-to-Video
+
+wget https://huggingface.co/camenduru/Video-to-Video/resolve/main/non_ema_0035000.pth
+wget https://huggingface.co/camenduru/Video-to-Video/resolve/main/non_ema_0035000.pth
+wget https://huggingface.co/camenduru/Video-to-Video/resolve/main/open_clip_pytorch_model.bin
+wget https://huggingface.co/camenduru/Video-to-Video/resolve/main/v2-1_512-ema-pruned.ckpt
+```
+
+```
+camenduru/damo-video-to-video
+```
 ## Inference
 
 
@@ -135,6 +151,10 @@ python gradio_demo.py
 
 ## Results
 Detailed results can be found in the [Project page](https://streamingt2v.github.io/).
+
+
+## MAWE (Motion Aware Error)
+If you need to compute MAWE you can use `get_mawe` function from `mave.py` from the project root.
 
 ## License
 Our code is published under the CreativeML Open RAIL-M license.
