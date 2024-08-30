@@ -1,0 +1,1 @@
+IMG_THUMBSIZE = None
