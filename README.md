@@ -155,7 +155,7 @@ Detailed results can be found in the [Project page](https://streamingt2v.github.
 
 To compute the MAWE metric for a given video (see our [paper](https://arxiv.org/abs/2403.14773) for its definition) use `get_mawe` function from `mawe.py`, which you can find in the project root.
 
-You can run for a given video it using CLI via:
+You can run it using CLI via:
 ```bash
 python mawe.py --video_path PATH_TO_VIDEO
 ```
