@@ -49,7 +49,7 @@ def warp_with_flow(img, flow, device="cuda"):
     return warped_image, (~mask_remaped).float()
 
 @torch.no_grad()
-def get_mawe(video_path, model, coeff):
+def get_mawe(video_path: str, model, coeff):
     video = read_video(video_path, pts_unit="sec", output_format="TCHW")[0]
     video = F.resize(video, size=[720, 720], antialias=False)
     _, _, height, width = video.shape

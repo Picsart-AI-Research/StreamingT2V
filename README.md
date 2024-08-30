@@ -37,7 +37,7 @@ Zhangyang Wang, Shant Navasardyan, Humphrey Shi
 </p>
 
 ## News
-* [07/29/2024] Released MAWE codes.
+* [07/29/2024] Released [MAWE](#mawe-motion-aware-warp-error) codes.
 * [04/06/2024] The [first version](https://huggingface.co/spaces/PAIR/StreamingT2V) of our huggingface demo released!
 * [04/05/2024] Code and [model](https://huggingface.co/PAIR/StreamingT2V) released!
 * [03/21/2024] Paper [StreamingT2V](https://arxiv.org/abs/2403.14773) released!
@@ -70,6 +70,22 @@ wget https://huggingface.co/PAIR/StreamingT2V/resolve/main/streaming_t2v.ckpt
 cd -
 ```
 ---  
+
+<!-- 5. (Optional) Download modelscope video-to-video model.
+This model 
+
+```
+mkdir -p ~/.cache/modelscope/hub/damo/
+cd ~/.cache/modelscope/hub/damo/Video-to-Video
+
+wget https://huggingface.co/camenduru/Video-to-Video/resolve/main/configuration.json
+wget https://huggingface.co/camenduru/Video-to-Video/resolve/main/non_ema_0035000.pth
+wget https://huggingface.co/camenduru/Video-to-Video/resolve/main/open_clip_pytorch_model.bin
+wget https://huggingface.co/camenduru/Video-to-Video/resolve/main/v2-1_512-ema-pruned.ckpt
+touch README.md
+mkdir assets
+touch assets/Fig_1.png
+``` -->
 
 ## Inference
 
@@ -136,7 +152,26 @@ Detailed results can be found in the [Project page](https://streamingt2v.github.
 
 
 ## MAWE (Motion Aware Warp Error)
-For computing MAWE use `get_mawe` function from `mave.py` from the project root.
+
+To compute MAWE for a given video (see our [paper](https://arxiv.org/abs/2403.14773) for its definition) use `get_mawe` function from `mawe.py`, which you can find in the project root.
+
+You can run using CLI as:
+```bash
+python mawe.py --video_path PATH_TO_VIDEO
+```
+
+Or from inside you python script as:
+```python
+from torchvision.models.optical_flow import Raft_Large_Weights, raft_large
+from mave import get_mawe
+
+model = raft_large(weights=Raft_Large_Weights.DEFAULT, progress=False).to(device)
+model = model.eval()
+mawe = get_mawe(video_path, model, coeff=9.5)
+
+print(f"MAWE for {video_path} is {mawe:0.2f}")
+```
+
 
 ## License
 Our code is published under the CreativeML Open RAIL-M license.
