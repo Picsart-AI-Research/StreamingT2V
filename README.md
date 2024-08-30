@@ -21,12 +21,12 @@ The effectiveness of the underlying autoregressive approach is not limited to th
 
 
 
-
-## 📰 NEWS 
+<h2 id="news">📰 NEWS</h2>
 * [09/30/2024] Code and model released!
 
 
-## ✨ Results
+<h2 id="results">✨ Results</h2>
+
 Detailed results can be found in the [Project page](https://streamingt2v.github.io/).
 
 ## Requirements
