@@ -153,22 +153,18 @@ Detailed results can be found in the [Project page](https://streamingt2v.github.
 
 ## MAWE (Motion Aware Warp Error)
 
-To compute MAWE for a given video (see our [paper](https://arxiv.org/abs/2403.14773) for its definition) use `get_mawe` function from `mawe.py`, which you can find in the project root.
+To compute the MAWE metric for a given video (see our [paper](https://arxiv.org/abs/2403.14773) for its definition) use `get_mawe` function from `mawe.py`, which you can find in the project root.
 
-You can run using CLI as:
+You can run for a given video it using CLI via:
 ```bash
 python mawe.py --video_path PATH_TO_VIDEO
 ```
 
-Or from inside you python script as:
+Or from inside your python script as:
 ```python
-from torchvision.models.optical_flow import Raft_Large_Weights, raft_large
-from mave import get_mawe
+from mawe import get_mawe
 
-model = raft_large(weights=Raft_Large_Weights.DEFAULT, progress=False).to(device)
-model = model.eval()
-mawe = get_mawe(video_path, model, coeff=9.5)
-
+mawe = get_mawe(video_path, coeff=9.5)
 print(f"MAWE for {video_path} is {mawe:0.2f}")
 ```
 

@@ -8,7 +8,14 @@ from torch.nn.functional import grid_sample
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-def warp_with_flow(img, flow, device="cuda"):
+device = "cuda" if torch.cuda.is_available() else "cpu"
+weights = Raft_Large_Weights.DEFAULT
+model = raft_large(weights=Raft_Large_Weights.DEFAULT, progress=False).to(device)
+model = model.eval()
+transforms = weights.transforms()
+
+
+def warp_with_flow(img, flow, device=device):
     B, C, H, W = img.size()
     xx = torch.arange(0, W).view(1, -1).repeat(H, 1)
     yy = torch.arange(0, H).view(-1, 1).repeat(1, W)
@@ -49,7 +56,8 @@ def warp_with_flow(img, flow, device="cuda"):
     return warped_image, (~mask_remaped).float()
 
 @torch.no_grad()
-def get_mawe(video_path: str, model, coeff):
+def get_mawe(video_path: str, coeff):
+
     video = read_video(video_path, pts_unit="sec", output_format="TCHW")[0]
     video = F.resize(video, size=[720, 720], antialias=False)
     _, _, height, width = video.shape
@@ -94,12 +102,6 @@ if __name__ == "__main__":
 
     coeff = args.coeff
     video_path = args.video_path
-
-    weights = Raft_Large_Weights.DEFAULT
-    transforms = weights.transforms()
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = raft_large(weights=Raft_Large_Weights.DEFAULT, progress=False).to(device)
-    model = model.eval()
-    mawe = get_mawe(video_path.as_posix(), model, coeff)
+    
+    mawe = get_mawe(video_path, coeff)
     print(f"MAWE for {video_path} is {mawe:0.2f}")
