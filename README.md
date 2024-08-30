@@ -164,7 +164,7 @@ Or from inside your python script as:
 ```python
 from mawe import get_mawe
 
-mawe = get_mawe(video_path, coeff=9.5)
+mawe = get_mawe(video_path)
 print(f"MAWE for {video_path} is {mawe:0.2f}")
 ```
 

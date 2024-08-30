@@ -56,7 +56,7 @@ def warp_with_flow(img, flow, device=device):
     return warped_image, (~mask_remaped).float()
 
 @torch.no_grad()
-def get_mawe(video_path: str, coeff):
+def get_mawe(video_path: str, coeff=9.5):
 
     video = read_video(video_path, pts_unit="sec", output_format="TCHW")[0]
     video = F.resize(video, size=[720, 720], antialias=False)
@@ -102,6 +102,6 @@ if __name__ == "__main__":
 
     coeff = args.coeff
     video_path = args.video_path
-    
+
     mawe = get_mawe(video_path, coeff)
     print(f"MAWE for {video_path} is {mawe:0.2f}")
