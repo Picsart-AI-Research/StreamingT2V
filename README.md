@@ -85,7 +85,7 @@ Add `--out_fps $FPS` to the call to define the FPS of the output video. Default 
 * VRAM memory reduction. 
 
 ## MAWE (Motion Aware Warp Error)
-Our proposed **Motion Aware Warp Error** (see our [paper](https://arxiv.org/abs/2403.14773)) is provided [here](https://github.com/Picsart-AI-Research/StreamingT2V/tree/StreamingModelscope).
+Our proposed **Motion Aware Warp Error** (see our [paper](https://arxiv.org/abs/2403.14773)) is provided [here](https://github.com/Picsart-AI-Research/StreamingT2V/tree/StreamingModelscope?tab=readme-ov-file#mawe-motion-aware-warp-error).
 
 ## StreamingModelscope
 The code for the StreamingT2V model based on Modelscope, as described in our [paper](https://arxiv.org/abs/2403.14773), can be now found [here](https://github.com/Picsart-AI-Research/StreamingT2V/tree/StreamingModelscope).
