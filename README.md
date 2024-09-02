@@ -93,7 +93,7 @@ The code for the StreamingT2V model based on Modelscope, as described in our [pa
 ## License
 Our code and model is published under the MIT license.
 
-We include codes and model weights of [SVD](https://github.com/Stability-AI/generative-models), [EMA-VFI](https://github.com/MCG-NJU/EMA-VFI) and [I2VGen-XL](https://i2vgen-xl.github.io). Please refer to their original licenses regarding their codes and weights. Due to these dependencies, StreamingI2V can be used only for non-commercial, research purposes. 
+We include codes and model weights of [SVD](https://github.com/Stability-AI/generative-models), [EMA-VFI](https://github.com/MCG-NJU/EMA-VFI) and [I2VGen-XL](https://i2vgen-xl.github.io). Please refer to their original licenses regarding their codes and weights. Due to these dependencies, StreamingSVD can be used only for non-commercial, research purposes. 
 
 
 ## Acknowledgments
