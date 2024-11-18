@@ -22,7 +22,7 @@ The effectiveness of the underlying autoregressive approach is not limited to th
 
 
 <h2 id="news">📰 NEWS</h2>
-* [08/30/2024] Code and model released!
+* [08/30/2024] Code and model released! The model weights are available on <a href="https://huggingface.co/PAIR/StreamingSVD">🤗HuggingFace</a>
 
 
 <h2 id="results">✨ Results</h2>
