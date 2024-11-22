@@ -33,8 +33,8 @@ from diffusers.models.attention_processor import (
 )
 from diffusers.models.embeddings import TimestepEmbedding, Timesteps
 from diffusers.models.modeling_utils import ModelMixin
-from diffusers.models.transformers.transformer_temporal import TransformerTemporalModel
-from diffusers.models.unets.unet_3d_blocks import (
+from i2v_enhance.transformer_temporal import TransformerTemporalModel
+from i2v_enhance.unet_3d_blocks import (
     CrossAttnDownBlock3D,
     CrossAttnUpBlock3D,
     DownBlock3D,
@@ -46,6 +46,65 @@ from diffusers.models.unets.unet_3d_blocks import (
 from diffusers.models.unets.unet_3d_condition import UNet3DConditionOutput
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
+
+
+def _chunked_forward(model: nn.Module, hidden_states, kargs, chunk_dim: int):
+    # "feed_forward_chunk_size" can be used to save memory
+    chunk_size = 1 if hidden_states.shape[chunk_dim] % 2 != 0 else hidden_states.shape[chunk_dim] // 2
+    if hidden_states.shape[chunk_dim] % chunk_size != 0:
+        raise ValueError(
+            f"`hidden_states` dimension to be chunked: {hidden_states.shape[chunk_dim]} has to be divisible by chunk size: {chunk_size}. Make sure to set an appropriate `chunk_size` when calling `unet.enable_forward_chunking`."
+        )
+
+    num_chunks = hidden_states.shape[chunk_dim] // chunk_size
+    output = torch.cat(
+        [model(hid_slice, **kargs)[0] for hid_slice in hidden_states.chunk(num_chunks, dim=chunk_dim)],
+        dim=chunk_dim,
+    )
+    return output
+
+def _chunked_downsample_block_forward(model: nn.Module, hidden_states, temb, encoder_hidden_states, kargs, chunk_dim: int):
+    # "feed_forward_chunk_size" can be used to save memory
+    chunk_size = 1 if hidden_states.shape[chunk_dim] % 2 != 0 else hidden_states.shape[chunk_dim] // 2
+    if hidden_states.shape[chunk_dim] % chunk_size != 0:
+        raise ValueError(
+            f"`hidden_states` dimension to be chunked: {hidden_states.shape[chunk_dim]} has to be divisible by chunk size: {chunk_size}. Make sure to set an appropriate `chunk_size` when calling `unet.enable_forward_chunking`."
+        )
+
+    num_chunks = hidden_states.shape[chunk_dim] // chunk_size
+    sample, res_samples = list(), list()
+    for hid_slice, temb_slice, ehid_slice in zip(hidden_states.chunk(num_chunks, dim=chunk_dim), temb.chunk(num_chunks, dim=chunk_dim), encoder_hidden_states.chunk(num_chunks, dim=chunk_dim)):
+        sample_slice, res_samples_slice = model(hidden_states=hid_slice, temb=temb_slice, encoder_hidden_states=ehid_slice, **kargs)
+        sample.append(sample_slice)
+        res_samples.append(res_samples_slice)
+    sample = torch.cat(sample, dim=chunk_dim)
+    res_samples = tuple(torch.cat(t, dim=chunk_dim) for t in zip(*res_samples))
+    return sample, res_samples
+
+
+
+
+def _chunked_upsample_block_forward(model: nn.Module, hidden_states, temb, res_hidden_states_tuple, encoder_hidden_states, kargs, chunk_dim: int):
+    # "feed_forward_chunk_size" can be used to save memory
+    chunk_size = 1 if hidden_states.shape[chunk_dim] % 2 != 0 else hidden_states.shape[chunk_dim] // 2
+    if hidden_states.shape[chunk_dim] % chunk_size != 0:
+        raise ValueError(
+            f"`hidden_states` dimension to be chunked: {hidden_states.shape[chunk_dim]} has to be divisible by chunk size: {chunk_size}. Make sure to set an appropriate `chunk_size` when calling `unet.enable_forward_chunking`."
+        )
+
+    num_chunks = hidden_states.shape[chunk_dim] // chunk_size
+    sample = list()
+    
+    hidden_states_ch = hidden_states.chunk(num_chunks, dim=chunk_dim)
+    temb_ch = temb.chunk(num_chunks, dim=chunk_dim)
+    encoder_hidden_states_ch = encoder_hidden_states.chunk(num_chunks, dim=chunk_dim)
+    res_hidden_states_tuple_ch = [res.chunk(num_chunks, dim=chunk_dim) for res in res_hidden_states_tuple]
+    for idx, hid_slice in enumerate(hidden_states_ch):
+        sample_slice = model(hidden_states=hid_slice, temb=temb_ch[idx], encoder_hidden_states=encoder_hidden_states_ch[idx], res_hidden_states_tuple=[res[idx] for res in res_hidden_states_tuple_ch], **kargs)
+        sample.append(sample_slice)
+    sample = torch.cat(sample, dim=chunk_dim)
+    return sample
+
 
 
 class I2VGenXLTransformerTemporalEncoder(nn.Module):
@@ -552,6 +611,7 @@ class I2VGenXLUNet(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin):
                 If `return_dict` is True, an [`~models.unets.unet_3d_condition.UNet3DConditionOutput`] is returned,
                 otherwise a `tuple` is returned where the first element is the sample tensor.
         """
+        torch.cuda.empty_cache()
         batch_size, channels, num_frames, height, width = sample.shape
 
         # By default samples have to be AT least a multiple of the overall upsampling factor.
@@ -649,27 +709,33 @@ class I2VGenXLUNet(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin):
         sample = torch.cat([sample, image_latents], dim=1)
         sample = sample.permute(0, 2, 1, 3, 4).reshape((sample.shape[0] * num_frames, -1) + sample.shape[3:])
         sample = self.conv_in(sample)
-        sample = self.transformer_in(
-            sample,
-            num_frames=num_frames,
-            cross_attention_kwargs=cross_attention_kwargs,
-            return_dict=False,
-        )[0]
+        sample = _chunked_forward(
+            self.transformer_in, 
+            sample, 
+            kargs = {
+                "num_frames": num_frames, 
+                "cross_attention_kwargs": cross_attention_kwargs, 
+                "return_dict": False
+            }, 
+            chunk_dim=0)
 
         # 6. down
         down_block_res_samples = (sample,)
-        for downsample_block in self.down_blocks:
+        for block_idx, downsample_block in enumerate(self.down_blocks):
+            downsample_block = downsample_block
             if hasattr(downsample_block, "has_cross_attention") and downsample_block.has_cross_attention:
-                sample, res_samples = downsample_block(
-                    hidden_states=sample,
-                    temb=emb,
-                    encoder_hidden_states=context_emb,
-                    num_frames=num_frames,
-                    cross_attention_kwargs=cross_attention_kwargs,
-                )
+                if block_idx in [0, 1]:
+                    sample, res_samples = _chunked_downsample_block_forward(downsample_block, sample, emb, context_emb, {"num_frames": num_frames, "cross_attention_kwargs": cross_attention_kwargs}, chunk_dim=0)
+                else:
+                    sample, res_samples = downsample_block(
+                        hidden_states=sample,
+                        temb=emb,
+                        encoder_hidden_states=context_emb,
+                        num_frames=num_frames,
+                        cross_attention_kwargs=cross_attention_kwargs,
+                    )
             else:
                 sample, res_samples = downsample_block(hidden_states=sample, temb=emb, num_frames=num_frames)
-
             down_block_res_samples += res_samples
 
         # 7. mid
@@ -694,15 +760,30 @@ class I2VGenXLUNet(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin):
                 upsample_size = down_block_res_samples[-1].shape[2:]
 
             if hasattr(upsample_block, "has_cross_attention") and upsample_block.has_cross_attention:
-                sample = upsample_block(
-                    hidden_states=sample,
-                    temb=emb,
-                    res_hidden_states_tuple=res_samples,
-                    encoder_hidden_states=context_emb,
-                    upsample_size=upsample_size,
-                    num_frames=num_frames,
-                    cross_attention_kwargs=cross_attention_kwargs,
-                )
+                if i in [2,3]:
+                    if i == 3:
+                        res_samples = tuple(res.to("cpu") for res in res_samples)
+                    sample = _chunked_upsample_block_forward(
+                        upsample_block, 
+                        sample, emb, 
+                        res_samples, 
+                        context_emb, 
+                        kargs = {
+                            "upsample_size": upsample_size, 
+                            "num_frames": num_frames, 
+                            "cross_attention_kwargs": cross_attention_kwargs
+                        }, 
+                        chunk_dim=0)
+                else:
+                    sample = upsample_block(
+                        hidden_states=sample,
+                        temb=emb,
+                        res_hidden_states_tuple=res_samples,
+                        encoder_hidden_states=context_emb,
+                        upsample_size=upsample_size,
+                        num_frames=num_frames,
+                        cross_attention_kwargs=cross_attention_kwargs,
+                    )
             else:
                 sample = upsample_block(
                     hidden_states=sample,
