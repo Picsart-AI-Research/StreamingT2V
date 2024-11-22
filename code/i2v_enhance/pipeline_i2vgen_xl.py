@@ -23,7 +23,8 @@ from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer, CLIPV
 
 from diffusers.image_processor import PipelineImageInput, VaeImageProcessor
 from diffusers.models import AutoencoderKL
-from diffusers.models.unets.unet_i2vgen_xl import I2VGenXLUNet
+# from diffusers.models.unets.unet_i2vgen_xl import I2VGenXLUNet
+from i2v_enhance.unet_i2vgen_xl import I2VGenXLUNet
 from diffusers.schedulers import DDIMScheduler
 from diffusers.utils import (
     BaseOutput,
