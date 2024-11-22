@@ -57,6 +57,13 @@ except:
 
 # from .diffusionmodules.util import mixed_checkpoint as checkpoint
 
+def _chunked_feed_forward(ff: nn.Module, hidden_states: torch.Tensor, chunk_dim: int, num_chunks: int):
+    ff_output = torch.cat(
+        [ff(hid_slice) for hid_slice in hidden_states.chunk(num_chunks, dim=chunk_dim)],
+        dim=chunk_dim,
+    )
+    return ff_output
+
 
 def exists(val):
     return val is not None
@@ -525,6 +532,13 @@ class BasicTransformerBlock(nn.Module):
         if self.checkpoint:
             logpy.debug(f"{self.__class__.__name__} is using checkpointing")
 
+        self.num_ff_chunks = None
+        self.ff_chunk_dim = 0
+
+    def set_chunk_feed_forward(self, dim: int = 0, num_chunks: int = 1):
+        # Sets chunk feed-forward
+        self.ff_chunk_dim = dim
+        self.num_ff_chunks = num_chunks
 
     def forward(
         self, x, context=None, additional_tokens=None, n_times_crossframe_attn_in_self=0
@@ -570,7 +584,12 @@ class BasicTransformerBlock(nn.Module):
             )
             + x
         )
-        x = self.ff(self.norm3(x)) + x
+        if self.num_ff_chunks is not None:
+            # "feed_forward_chunk_size" can be used to save memory
+            ff_output = _chunked_feed_forward(self.ff, self.norm3(x), self.ff_chunk_dim, self.num_ff_chunks)
+        else:
+            ff_output = self.ff(self.norm3(x))
+        x = ff_output + x
         return x
 
 
@@ -633,6 +652,13 @@ class BasicTransformerSingleLayerBlock(nn.Module):
         self.norm1 = nn.LayerNorm(dim)
         self.norm2 = nn.LayerNorm(dim)
         self.checkpoint = checkpoint
+        self.num_ff_chunks = None
+        self.ff_chunk_dim = 0
+
+    def set_chunk_feed_forward(self, ff_chunk_dim: int = 0, num_ff_chunks: int = 1):
+        # Sets chunk feed-forward
+        self.ff_chunk_dim = ff_chunk_dim
+        self.num_ff_chunks = num_ff_chunks
 
     def forward(self, x, context=None):
         # inputs = {"x": x, "context": context}
@@ -641,7 +667,12 @@ class BasicTransformerSingleLayerBlock(nn.Module):
 
     def _forward(self, x, context=None):
         x = self.attn1(self.norm1(x), context=context) + x
-        x = self.ff(self.norm2(x)) + x
+        if self.num_ff_chunks is not None:
+            # "feed_forward_chunk_size" can be used to save memory
+            ff_output = _chunked_feed_forward(self.ff, self.norm2(x), self.ff_chunk_dim, self.num_ff_chunks)
+        else:
+            ff_output = self.ff(self.norm2(x))
+        x = ff_output + x
         return x
 
 

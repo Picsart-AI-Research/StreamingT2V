@@ -41,6 +41,7 @@ class StreamingSVD(AbstractTrainer):
         self.diff_trainer_params: DiffusionTrainerParams
         self.vfi = vfi
         self.i2v_enhance = i2v_enhance
+        self.use_memopt = inference_params.use_memopt
             
     def on_inference_epoch_start(self):
         super().on_inference_epoch_start()
@@ -51,6 +52,9 @@ class StreamingSVD(AbstractTrainer):
             controlnet=self.controlnet,
             num_frame_conditioning=self.inference_params.num_conditional_frames
         )
+        # self.inference_model.eval()
+        self.inference_model.requires_grad_(False)
+
     
     def post_init(self):
         self.svd_pipeline.set_progress_bar_config(disable=True) 
@@ -62,7 +66,12 @@ class StreamingSVD(AbstractTrainer):
         for embedder in embedders:
             if hasattr(embedder,"input_key") and embedder.input_key == "cond_frames_without_noise":
                 self.image_encoder_apm = embedder.open_clip
-        
+                if self.use_memopt:
+                    self.image_encoder_apm.to("cpu")
+                # self.image_encoder_apm.eval()
+        if self.use_memopt:
+            self.first_stage_model.to("cpu")
+        self.first_stage_model.requires_grad_(False)
     # Adapted from https://github.com/Stability-AI/generative-models/blob/main/scripts/sampling/simple_video_sample.py
     def get_unique_embedder_keys_from_conditioner(self, conditioner):
         return list(set([x.input_key for x in conditioner.embedders]))
@@ -115,12 +124,15 @@ class StreamingSVD(AbstractTrainer):
     def decode_first_stage(self, z):
         z = 1.0 / self.diff_trainer_params.scale_factor * z
         #n_samples = default(self.en_and_decode_n_samples_a_time, z.shape[0])
-        n_samples = min(z.shape[0],8)
+        max_decode_chunk_size = 4 if self.use_memopt else 8
+        n_samples = min(z.shape[0], max_decode_chunk_size)
         #print("SVD decoder started")
         import time
         start = time.time()
         n_rounds = math.ceil(z.shape[0] / n_samples)
         all_out = []
+        if self.use_memopt:
+            self.first_stage_model.decoder.to("cuda")
         with torch.autocast("cuda", enabled=not self.diff_trainer_params.disable_first_stage_autocast):
             for n in range(n_rounds):
                 if isinstance(self.first_stage_model.decoder, VideoDecoder):
@@ -134,6 +146,8 @@ class StreamingSVD(AbstractTrainer):
                 all_out.append(out)
         out = torch.cat(all_out, dim=0)
         # print(f"SVD decoder finished after {time.time()-start} seconds.")
+        if self.use_memopt:
+            self.first_stage_model.decoder.to("cpu")
         return out
     
 
@@ -167,7 +181,8 @@ class StreamingSVD(AbstractTrainer):
             T=num_frames,
             device=self.device,
         )
-
+        if self.use_memopt:
+            self.conditioner.embedders[0].open_clip.model.visual.to("cuda")
         c, uc = self.conditioner.get_unconditional_conditioning(
             batch,
             batch_uc=batch_uc,
@@ -176,6 +191,8 @@ class StreamingSVD(AbstractTrainer):
                 "cond_frames_without_noise",
             ],
         )
+        if self.use_memopt:
+            self.conditioner.embedders[0].open_clip.model.visual.to("cpu")
 
         for k in ["crossattn", "concat"]:
             uc[k] = repeat(uc[k], "b ... -> b t ...", t=num_frames)
@@ -369,7 +386,8 @@ class StreamingSVD(AbstractTrainer):
         
         # Generating first chunk
         with torch.autocast(device_type="cuda",enabled=False):
-            video_chunks = self.svd_pipeline(image,decode_chunk_size=8).frames[0]
+            decode_chunk_size = 4 if self.use_memopt else 8
+            video_chunks = self.svd_pipeline(image,decode_chunk_size=decode_chunk_size).frames[0]
 
         video_chunks = torch.stack([ToTensor()(frame) for frame in video_chunks])
         video_chunks = video_chunks * 2.0 - 1 # [-1,1], float

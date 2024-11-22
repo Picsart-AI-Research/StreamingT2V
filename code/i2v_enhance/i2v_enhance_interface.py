@@ -22,7 +22,7 @@ def vfi_init(ckpt_cfg: VFIParams, device_id=0):
 
     vfi.load_model(ckpt_file.as_posix())
     vfi.eval()
-    vfi.device()
+    # vfi.device()
     assert device_id == 0, "VFI on rank!=0 not implemented yet."
     return vfi
 

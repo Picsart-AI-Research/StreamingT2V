@@ -17,9 +17,11 @@ class T2VInferenceParams(InferenceParams):
                  num_conditional_frames: int = 8,  # during GENERATION, take the last frames,i.e. [:-num_conditional_frames]
                  # can be "15", i.e. take always the 16th frame of the entire video, or a range "-8:-1", take always frames -8:-1 of the last chunk
                  anchor_frames: str = "15",
+                 use_memopt: bool = False,
                  **kwargs
                  ):
         super().__init__(**kwargs)
         self.n_autoregressive_generations = n_autoregressive_generations
         self.num_conditional_frames = num_conditional_frames
         self.anchor_frames = anchor_frames
+        self.use_memopt = use_memopt
