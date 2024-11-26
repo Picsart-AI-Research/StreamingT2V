@@ -27,8 +27,8 @@ from diffusers.models.resnet import (
     TemporalConvLayer,
     Upsample2D,
 )
-from diffusers.models.transformers.transformer_2d import Transformer2DModel
-from diffusers.models.transformers.transformer_temporal import (
+from i2v_enhance.transformer_2d import Transformer2DModel
+from i2v_enhance.transformer_temporal import (
     TransformerSpatioTemporalModel,
     TransformerTemporalModel,
 )
@@ -756,6 +756,8 @@ class CrossAttnUpBlock3D(nn.Module):
             # pop res hidden states
             res_hidden_states = res_hidden_states_tuple[-1]
             res_hidden_states_tuple = res_hidden_states_tuple[:-1]
+            if hidden_states.device != res_hidden_states.device:
+                res_hidden_states = res_hidden_states.to(hidden_states.device)
 
             # FreeU: Only operate on the first two stages
             if is_freeu_enabled:
@@ -883,7 +885,8 @@ class UpBlock3D(nn.Module):
                     b1=self.b1,
                     b2=self.b2,
                 )
-
+            if hidden_states.device != res_hidden_states.device:
+                res_hidden_states = res_hidden_states.to(hidden_states.device)
             hidden_states = torch.cat([hidden_states, res_hidden_states], dim=1)
 
             hidden_states = resnet(hidden_states, temb)

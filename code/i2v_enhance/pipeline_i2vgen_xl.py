@@ -644,6 +644,7 @@ class I2VGenXLPipeline(
         return_dict: bool = True,
         cross_attention_kwargs: Optional[Dict[str, Any]] = None,
         clip_skip: Optional[int] = 1,
+        use_memopt: bool = False,
     ):
         r"""
         The call function to the pipeline for image-to-video generation with [`I2VGenXLPipeline`].
@@ -862,6 +863,7 @@ class I2VGenXLPipeline(
                         image_embeddings=image_embeddings_list[idx],
                         cross_attention_kwargs=cross_attention_kwargs,
                         return_dict=False,
+                        use_memopt=use_memopt,
                     )[0]
 
                     # perform guidance

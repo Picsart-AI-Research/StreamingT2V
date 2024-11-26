@@ -110,7 +110,7 @@ class StreamingPipeline():
             inputs) > 0, "No images found. Please make sure the input path is correct."
 
         image_paths = inputs
-        image_as_numpy = [IImage.open(input).numpy() for input in image_paths]
+        image_as_numpy = [IImage.open(input).numpy() for input in sorted(image_paths)]
 
         return zip(image_as_numpy, image_paths)
 
@@ -150,6 +150,8 @@ class StreamingPipeline():
 
         enhance_pipeline, enhance_generator = i2v_enhance_interface.i2v_enhance_init(
             model.i2v_enhance)
+        if self.use_memopt:
+            enhance_pipeline.unet.enable_forward_chunking(dim=0, num_chunks=4)
         return_dict = {}
         return_dict["model"] = model
         return_dict["vfi"] = vfi
@@ -200,7 +202,7 @@ class StreamingPipeline():
             f"---- ENHANCE  ---- [START]. Video length = {len(video)}. Randomized Blending = {use_randomized_blending}. Chunk size = {chunk_size}. Overlap size = {overlap_size}.")
         video_enhanced = i2v_enhance_interface.i2v_enhance_process(
             image=image, video=video, pipeline=enhance_pipeline, generator=enhance_generator,
-            chunk_size=chunk_size, overlap_size=overlap_size, strength=strength, use_randomized_blending=use_randomized_blending)
+            chunk_size=chunk_size, overlap_size=overlap_size, strength=strength, use_randomized_blending=use_randomized_blending, use_memopt=self.use_memopt)
         video_enhanced = np.stack([np.asarray(frame)
                                   for frame in video_enhanced], axis=0)
         print("---- ENHANCE  ---- [FINISHED].")
@@ -223,7 +225,6 @@ class StreamingPipeline():
 
 
 if __name__ == "__main__":
-    torch.cuda.set_per_process_memory_fraction(0.3)
     generator = StreamingPipeline()
     
     input_path = generator.input_path
@@ -242,13 +243,9 @@ if __name__ == "__main__":
 
     assert output_path.exists() is False or output_path.is_dir(
     ), "Output path must be the path to a folder."
-    max_memory_allocated = torch.cuda.max_memory_allocated()
-    print(f"post init: {max_memory_allocated / 1024**3 :0.2f}")
 
     for image, image_path in generator.get_input_data(input_path):
         video = generator.image_to_video(image, (num_frames + 1)//2)
-        max_memory_allocated = torch.cuda.max_memory_allocated()
-        print(f"post image_to_video: {max_memory_allocated / 1024**3 :0.2f}")
         video_enh = generator.enhance_video(
             image=image, video=video, use_randomized_blending=use_randomized_blending, chunk_size=chunk_size, overlap_size=overlap_size)
         video_int = generator.interpolate_video(
@@ -258,5 +255,4 @@ if __name__ == "__main__":
         out_file = output_path / (image_path.stem+".mp4")
         out_file = out_file.as_posix()
         IImage(video_int, vmin=0, vmax=255).setFps(fps).save(out_file)
-        max_memory_allocated = torch.cuda.max_memory_allocated()
-        print(f"final: {max_memory_allocated / 1024**3 :0.2f}")
+        torch.cuda.empty_cache()

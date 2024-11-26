@@ -1,4 +1,5 @@
 import torch
+import json
 from i2v_enhance.pipeline_i2vgen_xl import I2VGenXLPipeline
 from tqdm import tqdm
 from PIL import Image
@@ -10,7 +11,6 @@ from pathlib import Path
 from modules.params.vfi import VFIParams
 from modules.params.i2v_enhance import I2VEnhanceParams
 from utils.loader import download_ckpt
-
 
 def vfi_init(ckpt_cfg: VFIParams, device_id=0):
     cfg.MODEL_CONFIG['MODEL_ARCH'] = cfg.init_model_config(F=32, depth=[
@@ -71,11 +71,19 @@ def i2v_enhance_init(i2vgen_cfg: I2VEnhanceParams):
         pipeline = I2VGenXLPipeline.from_pretrained(
             i2vgen_cfg.ckpt_path_global, torch_dtype=torch.float16, variant="fp16")
         pipeline.save_pretrained(i2vgen_cfg.ckpt_path_local)
+        model_index_path = f"{i2vgen_cfg.ckpt_path_local}/model_index.json"
+        with open(model_index_path) as f:
+            model_index = json.load(f)
+        model_index["unet"][0] = "i2v_enhance.unet_i2vgen_xl"
+        with open(model_index_path, "w") as f:
+            json.dump(model_index, f)
+        pipeline = I2VGenXLPipeline.from_pretrained(
+            i2vgen_cfg.ckpt_path_local, torch_dtype=torch.float16, variant="fp16")
     pipeline.enable_model_cpu_offload()
     return pipeline, generator
 
 
-def i2v_enhance_process(image, video, pipeline, generator, overlap_size, strength, chunk_size=38, use_randomized_blending=False):
+def i2v_enhance_process(image, video, pipeline, generator, overlap_size, strength, chunk_size=38, use_randomized_blending=False, use_memopt=False):
     prompt = "High Quality, HQ, detailed."
     negative_prompt = "Distorted, blurry, discontinuous, Ugly, blurry, low resolution, motionless, static, disfigured, disconnected limbs, Ugly faces, incomplete arms"
 
@@ -101,6 +109,7 @@ def i2v_enhance_process(image, video, pipeline, generator, overlap_size, strengt
             negative_prompt=negative_prompt,
             guidance_scale=9.0,
             generator=generator,
+            use_memopt=use_memopt,
         ).frames[0]
 
         # Remove the last few frames (< chunk_size) of the video that do not fit into one chunk.
@@ -123,6 +132,7 @@ def i2v_enhance_process(image, video, pipeline, generator, overlap_size, strengt
         negative_prompt=negative_prompt,
         guidance_scale=9.0,
         generator=generator,
+        use_memopt=use_memopt,
     ).frames[0]
 
     return frames

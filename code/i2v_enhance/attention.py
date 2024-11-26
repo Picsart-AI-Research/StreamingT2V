@@ -28,14 +28,7 @@ from diffusers.models.normalization import AdaLayerNorm, AdaLayerNormContinuous,
 logger = logging.get_logger(__name__)
 
 
-def _chunked_feed_forward(ff: nn.Module, hidden_states: torch.Tensor, chunk_dim: int, chunk_size: int):
-    # "feed_forward_chunk_size" can be used to save memory
-    if hidden_states.shape[chunk_dim] % chunk_size != 0:
-        raise ValueError(
-            f"`hidden_states` dimension to be chunked: {hidden_states.shape[chunk_dim]} has to be divisible by chunk size: {chunk_size}. Make sure to set an appropriate `chunk_size` when calling `unet.enable_forward_chunking`."
-        )
-
-    num_chunks = hidden_states.shape[chunk_dim] // chunk_size
+def _chunked_feed_forward(ff: nn.Module, hidden_states: torch.Tensor, chunk_dim: int, num_chunks: int):
     ff_output = torch.cat(
         [ff(hid_slice) for hid_slice in hidden_states.chunk(num_chunks, dim=chunk_dim)],
         dim=chunk_dim,
@@ -147,14 +140,13 @@ class JointTransformerBlock(nn.Module):
             self.ff_context = None
 
         # let chunk size default to None
-        self._chunk_size = None
-        self._chunk_dim = 0
+        self.num_ff_chunks = None
+        self.ff_chunk_dim = 0
 
-    # Copied from diffusers.models.attention.BasicTransformerBlock.set_chunk_feed_forward
-    def set_chunk_feed_forward(self, chunk_size: Optional[int], dim: int = 0):
+    def set_chunk_feed_forward(self, dim: int = 0, num_chunks: int = 1):
         # Sets chunk feed-forward
-        self._chunk_size = chunk_size
-        self._chunk_dim = dim
+        self.ff_chunk_dim = dim
+        self.num_ff_chunks = num_chunks
 
     def forward(
         self, hidden_states: torch.FloatTensor, encoder_hidden_states: torch.FloatTensor, temb: torch.FloatTensor
@@ -179,9 +171,9 @@ class JointTransformerBlock(nn.Module):
 
         norm_hidden_states = self.norm2(hidden_states)
         norm_hidden_states = norm_hidden_states * (1 + scale_mlp[:, None]) + shift_mlp[:, None]
-        if self._chunk_size is not None:
+        if self.num_ff_chunks is not None:
             # "feed_forward_chunk_size" can be used to save memory
-            ff_output = _chunked_feed_forward(self.ff, norm_hidden_states, self._chunk_dim, self._chunk_size)
+            ff_output = _chunked_feed_forward(self.ff, norm_hidden_states, self.ff_chunk_dim, self.num_ff_chunks)
         else:
             ff_output = self.ff(norm_hidden_states)
         ff_output = gate_mlp.unsqueeze(1) * ff_output
@@ -197,10 +189,10 @@ class JointTransformerBlock(nn.Module):
 
             norm_encoder_hidden_states = self.norm2_context(encoder_hidden_states)
             norm_encoder_hidden_states = norm_encoder_hidden_states * (1 + c_scale_mlp[:, None]) + c_shift_mlp[:, None]
-            if self._chunk_size is not None:
+            if self.num_ff_chunks is not None:
                 # "feed_forward_chunk_size" can be used to save memory
                 context_ff_output = _chunked_feed_forward(
-                    self.ff_context, norm_encoder_hidden_states, self._chunk_dim, self._chunk_size
+                    self.ff_context, norm_encoder_hidden_states, self.ff_chunk_dim, self.num_ff_chunks
                 )
             else:
                 context_ff_output = self.ff_context(norm_encoder_hidden_states)
@@ -410,13 +402,14 @@ class BasicTransformerBlock(nn.Module):
             self.scale_shift_table = nn.Parameter(torch.randn(6, dim) / dim**0.5)
 
         # let chunk size default to None
-        self._chunk_size = None
-        self._chunk_dim = 0
+        self.num_ff_chunks = None
+        self.ff_chunk_dim = 0
 
-    def set_chunk_feed_forward(self, chunk_size: Optional[int], dim: int = 0):
+    def set_chunk_feed_forward(self, dim: int = 0, num_chunks: int = 1):
         # Sets chunk feed-forward
-        self._chunk_size = chunk_size
-        self._chunk_dim = dim
+        self.ff_chunk_dim = dim
+        self.num_ff_chunks = num_chunks
+
 
     def forward(
         self,
@@ -523,9 +516,9 @@ class BasicTransformerBlock(nn.Module):
             norm_hidden_states = self.norm2(hidden_states)
             norm_hidden_states = norm_hidden_states * (1 + scale_mlp) + shift_mlp
 
-        if self._chunk_size is not None:
+        if self.num_ff_chunks is not None:
             # "feed_forward_chunk_size" can be used to save memory
-            ff_output = _chunked_feed_forward(self.ff, norm_hidden_states, self._chunk_dim, self._chunk_size)
+            ff_output = _chunked_feed_forward(self.ff, norm_hidden_states, self.ff_chunk_dim, self.num_ff_chunks)
         else:
             ff_output = self.ff(norm_hidden_states)
 
@@ -653,15 +646,13 @@ class TemporalBasicTransformerBlock(nn.Module):
         self.norm3 = nn.LayerNorm(time_mix_inner_dim)
         self.ff = FeedForward(time_mix_inner_dim, activation_fn="geglu")
 
-        # let chunk size default to None
-        self._chunk_size = None
-        self._chunk_dim = None
+        self.num_ff_chunks = None
+        self.ff_chunk_dim = 0
 
-    def set_chunk_feed_forward(self, chunk_size: Optional[int], **kwargs):
+    def set_chunk_feed_forward(self, dim: int = 0, num_chunks: int = 1):
         # Sets chunk feed-forward
-        self._chunk_size = chunk_size
-        # chunk dim should be hardcoded to 1 to have better speed vs. memory trade-off
-        self._chunk_dim = 1
+        self.ff_chunk_dim = dim
+        self.num_ff_chunks = num_chunks
 
     def forward(
         self,
@@ -683,8 +674,8 @@ class TemporalBasicTransformerBlock(nn.Module):
         residual = hidden_states
         hidden_states = self.norm_in(hidden_states)
 
-        if self._chunk_size is not None:
-            hidden_states = _chunked_feed_forward(self.ff_in, hidden_states, self._chunk_dim, self._chunk_size)
+        if self.num_ff_chunks is not None:
+            hidden_states = _chunked_feed_forward(self.ff_in, hidden_states, self.ff_chunk_dim, self.num_ff_chunks)
         else:
             hidden_states = self.ff_in(hidden_states)
 
@@ -704,8 +695,8 @@ class TemporalBasicTransformerBlock(nn.Module):
         # 4. Feed-forward
         norm_hidden_states = self.norm3(hidden_states)
 
-        if self._chunk_size is not None:
-            ff_output = _chunked_feed_forward(self.ff, norm_hidden_states, self._chunk_dim, self._chunk_size)
+        if self.num_ff_chunks is not None:
+            ff_output = _chunked_feed_forward(self.ff, norm_hidden_states, self.ff_chunk_dim, self.num_ff_chunks)
         else:
             ff_output = self.ff(norm_hidden_states)
 
@@ -960,8 +951,8 @@ class FreeNoiseTransformerBlock(nn.Module):
         self.norm3 = nn.LayerNorm(dim, norm_eps, norm_elementwise_affine)
 
         # let chunk size default to None
-        self._chunk_size = None
-        self._chunk_dim = 0
+        self.num_ff_chunks = None
+        self.ff_chunk_dim = 0
 
     def _get_frame_indices(self, num_frames: int) -> List[Tuple[int, int]]:
         frame_indices = []
@@ -993,10 +984,10 @@ class FreeNoiseTransformerBlock(nn.Module):
         self.context_stride = context_stride
         self.weighting_scheme = weighting_scheme
 
-    def set_chunk_feed_forward(self, chunk_size: Optional[int], dim: int = 0) -> None:
+    def set_chunk_feed_forward(self, dim: int = 0, num_chunks: int = 1):
         # Sets chunk feed-forward
-        self._chunk_size = chunk_size
-        self._chunk_dim = dim
+        self.ff_chunk_dim = dim
+        self.num_ff_chunks = num_chunks
 
     def forward(
         self,
@@ -1094,8 +1085,8 @@ class FreeNoiseTransformerBlock(nn.Module):
         # 3. Feed-forward
         norm_hidden_states = self.norm3(hidden_states)
 
-        if self._chunk_size is not None:
-            ff_output = _chunked_feed_forward(self.ff, norm_hidden_states, self._chunk_dim, self._chunk_size)
+        if self.num_ff_chunks is not None:
+            ff_output = _chunked_feed_forward(self.ff, norm_hidden_states, self.ff_chunk_dim, self.num_ff_chunks)
         else:
             ff_output = self.ff(norm_hidden_states)
 

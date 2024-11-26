@@ -22,7 +22,7 @@ from diffusers.configuration_utils import ConfigMixin, register_to_config
 from diffusers.loaders import UNet2DConditionLoadersMixin
 from diffusers.utils import logging
 from diffusers.models.activations import get_activation
-from diffusers.models.attention import Attention, FeedForward
+from i2v_enhance.attention import Attention, FeedForward
 from diffusers.models.attention_processor import (
     ADDED_KV_ATTENTION_PROCESSORS,
     CROSS_ATTENTION_PROCESSORS,
@@ -436,8 +436,7 @@ class I2VGenXLUNet(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin):
         for name, module in self.named_children():
             fn_recursive_attn_processor(name, module, processor)
 
-    # Copied from diffusers.models.unets.unet_3d_condition.UNet3DConditionModel.enable_forward_chunking
-    def enable_forward_chunking(self, chunk_size: Optional[int] = None, dim: int = 0) -> None:
+    def enable_forward_chunking(self, dim: int = 0, num_chunks: int = 1) -> None:
         """
         Sets the attention processor to use [feed forward
         chunking](https://huggingface.co/blog/reformer#2-chunked-feed-forward-layers).
@@ -453,30 +452,28 @@ class I2VGenXLUNet(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin):
         if dim not in [0, 1]:
             raise ValueError(f"Make sure to set `dim` to either 0 or 1, not {dim}")
 
-        # By default chunk size is 1
-        chunk_size = chunk_size or 1
 
-        def fn_recursive_feed_forward(module: torch.nn.Module, chunk_size: int, dim: int):
+        def fn_recursive_feed_forward(module: torch.nn.Module, dim: int, num_chunks: int):
             if hasattr(module, "set_chunk_feed_forward"):
-                module.set_chunk_feed_forward(chunk_size=chunk_size, dim=dim)
+                module.set_chunk_feed_forward(dim=dim, num_chunks=num_chunks)
 
             for child in module.children():
-                fn_recursive_feed_forward(child, chunk_size, dim)
+                fn_recursive_feed_forward(child, dim, num_chunks)
 
         for module in self.children():
-            fn_recursive_feed_forward(module, chunk_size, dim)
+            fn_recursive_feed_forward(module, dim, num_chunks)
 
     # Copied from diffusers.models.unets.unet_3d_condition.UNet3DConditionModel.disable_forward_chunking
     def disable_forward_chunking(self):
-        def fn_recursive_feed_forward(module: torch.nn.Module, chunk_size: int, dim: int):
+        def fn_recursive_feed_forward(module: torch.nn.Module, dim: int, num_chunks: int):
             if hasattr(module, "set_chunk_feed_forward"):
-                module.set_chunk_feed_forward(chunk_size=chunk_size, dim=dim)
+                module.set_chunk_feed_forward(dim=dim, num_chunks=num_chunks)
 
             for child in module.children():
-                fn_recursive_feed_forward(child, chunk_size, dim)
+                fn_recursive_feed_forward(child, dim, num_chunks)
 
         for module in self.children():
-            fn_recursive_feed_forward(module, None, 0)
+            fn_recursive_feed_forward(module, 0, None)
 
     # Copied from diffusers.models.unets.unet_2d_condition.UNet2DConditionModel.set_default_attn_processor
     def set_default_attn_processor(self):
@@ -584,6 +581,7 @@ class I2VGenXLUNet(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin):
         timestep_cond: Optional[torch.Tensor] = None,
         cross_attention_kwargs: Optional[Dict[str, Any]] = None,
         return_dict: bool = True,
+        use_memopt: bool = False,
     ) -> Union[UNet3DConditionOutput, Tuple[torch.Tensor]]:
         r"""
         The [`I2VGenXLUNet`] forward method.
@@ -709,22 +707,30 @@ class I2VGenXLUNet(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin):
         sample = torch.cat([sample, image_latents], dim=1)
         sample = sample.permute(0, 2, 1, 3, 4).reshape((sample.shape[0] * num_frames, -1) + sample.shape[3:])
         sample = self.conv_in(sample)
-        sample = _chunked_forward(
-            self.transformer_in, 
-            sample, 
-            kargs = {
-                "num_frames": num_frames, 
-                "cross_attention_kwargs": cross_attention_kwargs, 
-                "return_dict": False
-            }, 
-            chunk_dim=0)
+        if use_memopt:
+            sample = _chunked_forward(
+                self.transformer_in, 
+                sample, 
+                kargs = {
+                    "num_frames": num_frames, 
+                    "cross_attention_kwargs": cross_attention_kwargs, 
+                    "return_dict": False
+                }, 
+                chunk_dim=0)
+        else:
+            sample = self.transformer_in(
+                sample,
+                num_frames=num_frames,
+                cross_attention_kwargs=cross_attention_kwargs,
+                return_dict=False,
+            )[0]
 
         # 6. down
         down_block_res_samples = (sample,)
         for block_idx, downsample_block in enumerate(self.down_blocks):
             downsample_block = downsample_block
             if hasattr(downsample_block, "has_cross_attention") and downsample_block.has_cross_attention:
-                if block_idx in [0, 1]:
+                if use_memopt and block_idx in [0, 1]:
                     sample, res_samples = _chunked_downsample_block_forward(downsample_block, sample, emb, context_emb, {"num_frames": num_frames, "cross_attention_kwargs": cross_attention_kwargs}, chunk_dim=0)
                 else:
                     sample, res_samples = downsample_block(
@@ -760,7 +766,7 @@ class I2VGenXLUNet(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin):
                 upsample_size = down_block_res_samples[-1].shape[2:]
 
             if hasattr(upsample_block, "has_cross_attention") and upsample_block.has_cross_attention:
-                if i in [2,3]:
+                if use_memopt and i in [2,3]:
                     if i == 3:
                         res_samples = tuple(res.to("cpu") for res in res_samples)
                     sample = _chunked_upsample_block_forward(
