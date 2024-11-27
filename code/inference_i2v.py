@@ -109,8 +109,8 @@ class StreamingPipeline():
         assert len(
             inputs) > 0, "No images found. Please make sure the input path is correct."
 
-        image_paths = inputs
-        image_as_numpy = [IImage.open(input).numpy() for input in sorted(image_paths)]
+        image_paths = list(sorted(inputs))
+        image_as_numpy = [IImage.open(input).numpy() for input in image_paths]
 
         return zip(image_as_numpy, image_paths)
 
