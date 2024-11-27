@@ -104,8 +104,8 @@ class StreamingPipeline():
         assert len(
             inputs) > 0, "No images found. Please make sure the input path is correct."
 
-        image_paths = inputs
-        image_as_numpy = [IImage.open(input).numpy() for input in sorted(image_paths)]
+        image_paths = sorted(inputs)
+        image_as_numpy = [IImage.open(input).numpy() for input in image_paths]
 
         return zip(image_as_numpy, image_paths)
 
@@ -233,6 +233,7 @@ if __name__ == "__main__":
     ), "Output path must be the path to a folder."
 
     for image, image_path in generator.get_input_data(input_path):
+        print("input_path", image_path)
         video = generator.image_to_video(image, (num_frames + 1)//2)
         video_enh = generator.enhance_video(
             image=image, video=video, use_randomized_blending=use_randomized_blending, chunk_size=chunk_size, overlap_size=overlap_size)
