@@ -1,4 +1,4 @@
-
+import os
 import torch
 from models.svd.sgm.modules.diffusionmodules.wrappers import OpenAIWrapper
 from einops import rearrange, repeat
@@ -61,8 +61,8 @@ class StreamingWrapper(OpenAIWrapper):
         else:
             hs_control_input = None
             hs_control_mid = None
-        kwargs["hs_control_input"] = hs_control_input
-        kwargs["hs_control_mid"] = hs_control_mid
+        # kwargs["hs_control_input"] = hs_control_input
+        # kwargs["hs_control_mid"] = hs_control_mid
 
         out = self.diffusion_model(
             x=x,

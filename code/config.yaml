@@ -314,3 +314,4 @@ model:
         num_conditional_frames: 7 # is this used?
         anchor_frames: '6'  #  Take the (Number+1)th frame as CLIP encoding for StreamingSVD
         reset_seed_per_generation: true # If true, the seed is reset on every generation
+        use_memopt: False

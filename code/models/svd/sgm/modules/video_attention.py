@@ -4,6 +4,13 @@ from models.svd.sgm.modules.attention import *
 from models.svd.sgm.modules.diffusionmodules.util import (AlphaBlender, linear,
                                              timestep_embedding)
 
+def _chunked_feed_forward(ff: nn.Module, hidden_states: torch.Tensor, chunk_dim: int, num_chunks: int):
+    ff_output = torch.cat(
+        [ff(hid_slice) for hid_slice in hidden_states.chunk(num_chunks, dim=chunk_dim)],
+        dim=chunk_dim,
+    )
+    return ff_output
+
 
 class TimeMixSequential(nn.Sequential):
     def forward(self, x, context=None, timesteps=None):
@@ -98,6 +105,14 @@ class VideoTransformerBlock(nn.Module):
         self.checkpoint = checkpoint
         if self.checkpoint:
             print(f"{self.__class__.__name__} is using checkpointing")
+        self.num_ff_chunks = None
+        self.ff_chunk_dim = 0
+
+    def set_chunk_feed_forward(self, dim: int = 0, num_chunks: int = 1):
+        # Sets chunk feed-forward
+        self.ff_chunk_dim = dim
+        self.num_ff_chunks = num_chunks
+
 
     def forward(
         self, x: torch.Tensor, context: torch.Tensor = None, timesteps: int = None
@@ -117,7 +132,12 @@ class VideoTransformerBlock(nn.Module):
 
         if self.ff_in:
             x_skip = x
-            x = self.ff_in(self.norm_in(x))
+            if self.num_ff_chunks is not None:
+                # "feed_forward_chunk_size" can be used to save memory
+                x = _chunked_feed_forward(self.ff_in, self.norm_in(x), self.ff_chunk_dim, self.num_ff_chunks)
+            else:
+                x = self.ff_in(self.norm_in(x))
+
             if self.is_res:
                 x += x_skip
         #import pdb
@@ -133,7 +153,12 @@ class VideoTransformerBlock(nn.Module):
             else:
                 x = self.attn2(self.norm2(x), context=context) + x
         x_skip = x
-        x = self.ff(self.norm3(x))
+        if self.num_ff_chunks is not None:
+            # "feed_forward_chunk_size" can be used to save memory
+            x = _chunked_feed_forward(self.ff, self.norm3(x), self.ff_chunk_dim, self.num_ff_chunks)
+        else:
+            x = self.ff(self.norm3(x))
+
         if self.is_res:
             x += x_skip
 

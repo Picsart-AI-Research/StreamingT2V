@@ -22,6 +22,7 @@ The effectiveness of the underlying autoregressive approach is not limited to th
 
 
 <h2 id="news">📰 NEWS</h2>
+* [11/28/2024] Memory optimized version released!</br>
 * [08/30/2024] Code and model released! The model weights are available on <a href="https://huggingface.co/PAIR/StreamingSVD">🤗HuggingFace</a>
 
 
@@ -36,7 +37,7 @@ Our code was tested on linux, using Python 3.9 and CUDA 11.7.
 
 <h2 id="Setup">🔧 Setup</h2>
 
-1. Clone this repository and install requirements using CUDA >= 11.7: 
+1. Clone this repository and install requirements using CUDA >= 11.8: 
 ``` shell
 git clone https://github.com/Picsart-AI-Research/StreamingT2V.git
 cd StreamingT2V/
@@ -77,6 +78,8 @@ Add `--use_randomized_blending $RB` to the call to define whether to use randomi
 * output FPS
 
 Add `--out_fps $FPS` to the call to define the FPS of the output video. Default value: `$FPS=24`
+
+Use `--use_memopt` to enable memory optimizations for hardware with 24GB VRAM. If using a previously cloned repository, update the environment and delete the `code/checkpoint/i2v_enhance` folder to ensure the correct version is used.
 
 
 ## 💡 Future Plans   

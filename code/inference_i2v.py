@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 import sys
 import os
@@ -39,8 +40,10 @@ class CustomCLI(LightningCLI):
                             help="Chunk size used in randomized blending.")
         parser.add_argument("--overlap_size", type=int, default=12,
                             help="Overlap size used in randomized blending.")
-        parser.add_argument("--use_randomized_blending", type=bool, default=False,
+        parser.add_argument("--use_randomized_blending", action=argparse.BooleanOptionalAction,
                             help="Wether to use randomized blending.")
+        parser.add_argument("--use_memopt", action=argparse.BooleanOptionalAction,
+                            help="Use memory optimizations")
 
         return parser
 
@@ -56,7 +59,9 @@ class StreamingPipeline():
         argv_backup = deepcopy(sys.argv)
         sys.argv = [__file__]
         sys.argv.extend(self.config_call(argv_backup[1:], code_fol))
-
+        self.use_memopt = "--use_memopt" in sys.argv
+        if self.use_memopt:
+            sys.argv.extend(["--model.init_args.inference_params.use_memopt", "True"])
         cli = CustomCLI(LightningModule, run=False, subclass_mode_model=True, parser_kwargs={
                         "parser_mode": "omegaconf"}, save_config_callback=None)
         return_dict = self.init_model(cli)
@@ -135,11 +140,18 @@ class StreamingPipeline():
 
         model.load_state_dict(ckpt)  # load trained model
         trainer = cli.trainer
+        if self.use_memopt:
+            model.model.diffusion_model.enable_forward_chunking(dim=0, num_chunks=2)
+            model.controlnet.enable_forward_chunking(dim=0, num_chunks=2)
         data_module_loader = partial(VideoDataModule, workers=2)
         vfi = i2v_enhance_interface.vfi_init(model.vfi)
+        if not self.use_memopt:
+            vfi.device()
 
         enhance_pipeline, enhance_generator = i2v_enhance_interface.i2v_enhance_init(
             model.i2v_enhance)
+        if self.use_memopt:
+            enhance_pipeline.unet.enable_forward_chunking(dim=0, num_chunks=4)
         return_dict = {}
         return_dict["model"] = model
         return_dict["vfi"] = vfi
@@ -190,7 +202,7 @@ class StreamingPipeline():
             f"---- ENHANCE  ---- [START]. Video length = {len(video)}. Randomized Blending = {use_randomized_blending}. Chunk size = {chunk_size}. Overlap size = {overlap_size}.")
         video_enhanced = i2v_enhance_interface.i2v_enhance_process(
             image=image, video=video, pipeline=enhance_pipeline, generator=enhance_generator,
-            chunk_size=chunk_size, overlap_size=overlap_size, strength=strength, use_randomized_blending=use_randomized_blending)
+            chunk_size=chunk_size, overlap_size=overlap_size, strength=strength, use_randomized_blending=use_randomized_blending, use_memopt=self.use_memopt)
         video_enhanced = np.stack([np.asarray(frame)
                                   for frame in video_enhanced], axis=0)
         print("---- ENHANCE  ---- [FINISHED].")
@@ -214,7 +226,7 @@ class StreamingPipeline():
 
 if __name__ == "__main__":
     generator = StreamingPipeline()
-
+    
     input_path = generator.input_path
     output_path = Path(generator.output_path)
     num_frames = generator.num_frames
@@ -244,3 +256,4 @@ if __name__ == "__main__":
         out_file = output_path / (image_path.stem+".mp4")
         out_file = out_file.as_posix()
         IImage(video_int, vmin=0, vmax=255).setFps(fps).save(out_file)
+        torch.cuda.empty_cache()

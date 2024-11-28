@@ -13,13 +13,13 @@ class Model:
         backbonecfg, multiscalecfg = MODEL_CONFIG['MODEL_ARCH']
         self.net = multiscaletype(backbonetype(**backbonecfg), **multiscalecfg)
         self.name = MODEL_CONFIG['LOGNAME']
-        self.device()
+        # self.device()
 
         # train
-        self.optimG = AdamW(self.net.parameters(), lr=2e-4, weight_decay=1e-4)
-        self.lap = LapLoss()
-        if local_rank != -1:
-            self.net = DDP(self.net, device_ids=[local_rank], output_device=local_rank)
+        # self.optimG = AdamW(self.net.parameters(), lr=2e-4, weight_decay=1e-4)
+        # self.lap = LapLoss()
+        # if local_rank != -1:
+        #     self.net = DDP(self.net, device_ids=[local_rank], output_device=local_rank)
 
     def train(self):
         self.net.train()
@@ -44,7 +44,7 @@ class Model:
             if name is None:
                 name = self.name
             # self.net.load_state_dict(convert(torch.load(f'ckpt/{name}.pkl')))
-            self.net.load_state_dict(convert(torch.load(f'{name}')))
+            self.net.load_state_dict(convert(torch.load(f'{name}', map_location="cpu")))
     
     def save_model(self, rank=0):
         if rank == 0:
