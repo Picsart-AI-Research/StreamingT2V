@@ -85,7 +85,7 @@ Use `--use_memopt` to enable memory optimizations for hardware with 24GB VRAM. I
 ## 💡 Future Plans   
 * Technical report describing StreamingSVD. 
 * Release of StreamingSVD for text-to-video.  
-* VRAM memory reduction. 
+* <s>VRAM memory reduction.</s> 
 
 ## MAWE (Motion Aware Warp Error)
 Our proposed **Motion Aware Warp Error** (see our [paper](https://arxiv.org/abs/2403.14773)) is provided [here](https://github.com/Picsart-AI-Research/StreamingT2V/tree/StreamingModelscope?tab=readme-ov-file#mawe-motion-aware-warp-error).
