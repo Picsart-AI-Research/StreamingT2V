@@ -457,13 +457,13 @@ class MotionFormer(nn.Module):
 
     def get_cor(self, shape, device):
         k = (str(shape), str(device))
-        if k not in self.cor:
-            tenHorizontal = torch.linspace(-1.0, 1.0, shape[2], device=device).view(
-                1, 1, 1, shape[2]).expand(shape[0], -1, shape[1], -1).permute(0, 2, 3, 1)
-            tenVertical = torch.linspace(-1.0, 1.0, shape[1], device=device).view(
-                1, 1, shape[1], 1).expand(shape[0], -1, -1, shape[2]).permute(0, 2, 3, 1)
-            self.cor[k] = torch.cat([tenHorizontal, tenVertical], -1).to(device)
-        return self.cor[k]
+        # if k not in self.cor:
+        tenHorizontal = torch.linspace(-1.0, 1.0, shape[2], device=device).view(
+            1, 1, 1, shape[2]).expand(shape[0], -1, shape[1], -1).permute(0, 2, 3, 1)
+        tenVertical = torch.linspace(-1.0, 1.0, shape[1], device=device).view(
+            1, 1, shape[1], 1).expand(shape[0], -1, -1, shape[2]).permute(0, 2, 3, 1)
+        return torch.cat([tenHorizontal, tenVertical], -1).to(device)
+        # return self.cor[k]
 
     def forward(self, x1, x2):
         B = x1.shape[0] 

@@ -7,6 +7,7 @@ trainer:
   num_nodes: 1
   precision: 16-mixed
   logger: False
+  inference_mode: False
 model:
   class_path: diffusion_trainer.streaming_svd.StreamingSVD
   init_args:

@@ -2,9 +2,10 @@
 import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-backwarp_tenGrid = {}
+# backwarp_tenGrid = {}
 
 def warp(tenInput, tenFlow):
+    backwarp_tenGrid = dict()
     k = (str(tenFlow.device), str(tenFlow.size()))
     if k not in backwarp_tenGrid:
         tenHorizontal = torch.linspace(-1.0, 1.0, tenFlow.shape[3], device=device).view(
