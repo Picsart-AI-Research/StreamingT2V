@@ -32,8 +32,7 @@ Detailed results can be found in the [Project page](https://streamingt2v.github.
 
 ## Requirements
 
-Our code needs 60 GB of VRAM in the default setting (when generating 200 frames). Try to reduce the number of frames or activate randomized blending to reduce the memory footprint. 
-Our code was tested on linux, using Python 3.9 and CUDA 11.7. 
+Our code requires 60 GB of VRAM in the default configuration when generating 200 frames. The memory-optimized version significantly reduces this to 24 GB of VRAM but operates approximately 50% slower than the default. To further reduce memory usage, consider lowering the number of frames or enabling randomized blending. Our code was tested on linux, using Python 3.9 and CUDA >= 11.8. 
 
 <h2 id="Setup">🔧 Setup</h2>
 
