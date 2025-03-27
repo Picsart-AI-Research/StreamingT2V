@@ -37,14 +37,13 @@ Zhangyang Wang, Shant Navasardyan, Humphrey Shi
 </p>
 
 ## News
+* [26/02/2025] StreamingT2V is accepted by CVPR-2025. 🎉🎉🎉
 * [07/29/2024] Released [MAWE](#mawe-motion-aware-warp-error) codes.
 * [04/06/2024] The [first version](https://huggingface.co/spaces/PAIR/StreamingT2V) of our huggingface demo released!
 * [04/05/2024] Code and [model](https://huggingface.co/PAIR/StreamingT2V) released!
 * [03/21/2024] Paper [StreamingT2V](https://arxiv.org/abs/2403.14773) released!
 
 ## Setup
-
-
 
 1. Clone this repository and enter:
 
