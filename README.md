@@ -22,7 +22,7 @@ The effectiveness of the underlying autoregressive approach is not limited to th
 
 
 <h2 id="news">📰 NEWS</h2>
-* [26/02/2025] StreamingT2V is accepted by CVPR-2025. 🎉🎉🎉
+* [26/02/2025] StreamingT2V is accepted by CVPR-2025. 🎉🎉🎉</br>
 * [11/28/2024] Memory optimized version released!</br>
 * [08/30/2024] Code and model released! The model weights are available on <a href="https://huggingface.co/PAIR/StreamingSVD">🤗HuggingFace</a>
 
